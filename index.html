@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agnes Video V2.0</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0d0f;
+      --surface: #18181b;
+      --surface2: #222226;
+      --border: #2e2e33;
+      --accent: #7c6fff;
+      --accent-hover: #9a8fff;
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    /* ─── Header ─── */
+    header {
+      max-width: 800px;
+      margin: 0 auto 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #7c6fff, #b06fff);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo span { font-size: 12px; color: var(--text-muted); }
+
+    /* ─── API Key ─── */
+    .api-key-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .api-key-wrap input {
+      width: 200px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .api-key-wrap input:focus { border-color: var(--accent); }
+
+    /* ─── Main card ─── */
+    .card {
+      max-width: 800px;
+      margin: 0 auto 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    /* ─── Mode tabs ─── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px 0;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+
+    .tab {
+      padding: 8px 16px;
+      border-radius: 8px 8px 0 0;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      transition: color .2s, background .2s;
+    }
+
+    .tab:hover { color: var(--text); background: var(--surface2); }
+
+    .tab.active {
+      color: var(--accent);
+      background: var(--surface2);
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* ─── Form body ─── */
+    .form-body { padding: 24px; }
+
+    .field { margin-bottom: 18px; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    textarea, input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+
+    textarea { resize: vertical; min-height: 100px; }
+    textarea:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    /* ─── Image URL list ─── */
+    .image-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .image-row { display: flex; gap: 8px; align-items: center; }
+    .image-row input { flex: 1; }
+
+    /* ─── Advanced toggle ─── */
+    .advanced-toggle {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      user-select: none;
+    }
+
+    .advanced-toggle:hover { color: var(--text); }
+
+    .chevron { transition: transform .2s; display: inline-block; }
+    .chevron.open { transform: rotate(90deg); }
+
+    .advanced-panel { display: none; }
+    .advanced-panel.open { display: block; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .2s, background .2s;
+    }
+
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      padding: 12px;
+      font-size: 15px;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-ghost:hover { color: var(--text); }
+
+    .btn-icon {
+      background: var(--surface2);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+
+    .btn-icon:hover { color: var(--error); border-color: var(--error); }
+
+    /* ─── Status card ─── */
+    .status-card {
+      max-width: 800px;
+      margin: 0 auto 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      display: none;
+    }
+
+    .status-card.visible { display: block; }
+
+    .status-header {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+
+    .badge-queued { background: rgba(245,158,11,.15); color: var(--warning); }
+    .badge-in_progress { background: rgba(124,111,255,.15); color: var(--accent); }
+    .badge-completed { background: rgba(34,197,94,.15); color: var(--success); }
+    .badge-failed { background: rgba(239,68,68,.15); color: var(--error); }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .dot.pulse { animation: pulse 1.5s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .3; }
+    }
+
+    .task-id {
+      font-size: 12px; color: var(--text-muted);
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ─── Progress bar ─── */
+    .progress-wrap { margin-bottom: 12px; }
+
+    .progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #b06fff);
+      border-radius: 3px;
+      transition: width .5s ease;
+    }
+
+    /* ─── Video result ─── */
+    .result-card {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .result-card.visible { display: block; }
+
+    .result-card video {
+      width: 100%;
+      max-height: 480px;
+      display: block;
+      background: #000;
+    }
+
+    .result-footer {
+      padding: 16px 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 12px;
+    }
+
+    .result-meta { font-size: 13px; color: var(--text-muted); }
+    .result-meta span { color: var(--text); font-weight: 500; }
+
+    .btn-download {
+      background: var(--success);
+      color: #fff;
+      text-decoration: none;
+    }
+
+    .btn-download:hover { opacity: .85; }
+
+    /* ─── Error message ─── */
+    .error-msg {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: var(--error);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .error-msg.visible { display: block; }
+
+    /* ─── 轮询重试提示 ─── */
+    .poll-retry-info {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      display: none;
+    }
+
+    .poll-retry-info.visible { display: block; }
+
+    .poll-retry-info.warn {
+      background: rgba(245,158,11,.1);
+      border: 1px solid rgba(245,158,11,.3);
+      color: var(--warning);
+    }
+
+    .poll-retry-info.danger {
+      background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3);
+      color: var(--error);
+    }
+
+    .retry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .retry-detail {
+      font-size: 12px;
+      opacity: 0.85;
+      word-break: break-all;
+    }
+
+    /* ─── Hint text ─── */
+    .hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+
+    /* ─── Spinner ─── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin .8s linear infinite; }
+
+    /* ─── Saved indicator ─── */
+    .saved-badge {
+      font-size: 11px; color: var(--success);
+      opacity: 0; transition: opacity .3s;
+    }
+
+    .saved-badge.show { opacity: 1; }
+
+    /* ─── Media Type Tabs 一级页签 ─── */
+    .media-tabs {
+      max-width: 800px;
+      margin: -8px auto 24px;
+      display: flex;
+      background: rgba(24, 24, 27, 0.6);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .media-tab {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .media-tab:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .media-tab.active {
+      color: #fff;
+      background: linear-gradient(135deg, #7c6fff, #b06fff);
+      box-shadow: 0 4px 15px rgba(124, 111, 255, 0.3);
+    }
+
+    .image-preview-wrap {
+      width: 100%;
+      background: #121214;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+      overflow: hidden;
+    }
+
+    .image-preview-wrap img {
+      max-width: 100%;
+      max-height: 600px;
+      object-fit: contain;
+    }
+
+    /* ─── 图片输入增强组件 ─── */
+    .image-row-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .image-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      position: relative;
+    }
+
+    .image-row input {
+      flex: 1;
+    }
+
+    .file-upload-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: var(--radius);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      height: 38px;
+      user-select: none;
+    }
+
+    .file-upload-btn:hover {
+      background: var(--border);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .pic-preview {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    .pic-preview img {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .pic-preview-info {
+      font-size: 11px;
+      color: var(--text-muted);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .pic-preview-del {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 14px;
+      padding: 2px 6px;
+      user-select: none;
+    }
+
+    .pic-preview-del:hover {
+      color: var(--error);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">✨</div>
+    <div>
+      <h1>Agnes AI Gateway</h1>
+      <span>多媒体生成 · 自由 AI 接口</span>
+    </div>
+  </div>
+
+  <div class="api-key-wrap">
+    <span class="saved-badge" id="savedBadge">✓ 已保存</span>
+    <input type="password" id="apiKeyInput" placeholder="输入 API Key" autocomplete="off">
+  </div>
+</header>
+
+<!-- 一级媒体选择页签 -->
+<div class="media-tabs">
+  <button class="media-tab active" id="tabVideo" onclick="switchMediaType('video')">🎬 视频生成</button>
+  <button class="media-tab" id="tabImage" onclick="switchMediaType('image')">🎨 图像生成</button>
+</div>
+
+<!-- Generation Card - Video -->
+<div class="card" id="videoCard">
+  <!-- Mode tabs -->
+  <div class="tabs">
+    <button class="tab active" data-mode="text">文本生成视频</button>
+    <button class="tab" data-mode="image">图片生成视频</button>
+    <button class="tab" data-mode="multi">多图视频</button>
+    <button class="tab" data-mode="keyframe">关键帧动画</button>
+  </div>
+
+  <div class="form-body">
+
+    <!-- Prompt -->
+    <div class="field">
+      <label>提示词 (Prompt) <span style="color:var(--error)">*</span></label>
+      <textarea id="prompt" placeholder="描述视频内容、动作、场景、摄像机运动、光线和风格…&#10;例如：A young astronaut walking across a red desert planet, dust blowing in the wind, slow cinematic tracking shot, dramatic sunset lighting, realistic sci-fi style"></textarea>
+    </div>
+
+    <!-- Single image URL (image-to-video mode) -->
+    <div class="field" id="singleImageField" style="display:none">
+      <label>参考图片 URL</label>
+      <div class="image-row-wrap">
+        <div class="image-row">
+          <input type="text" id="singleImage" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+          <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+            📁
+            <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+          </label>
+        </div>
+        <div class="pic-preview" style="display:none"></div>
+      </div>
+      <div class="hint">支持公网图片链接，或选择/粘贴本地图片（将转为 Base64）</div>
+    </div>
+
+    <!-- Multi-image URL list (multi / keyframe modes) -->
+    <div class="field" id="multiImageField" style="display:none">
+      <label>参考图片列表</label>
+      <div class="image-list" id="imageList">
+        <div class="image-row-wrap">
+          <div class="image-row">
+            <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+            <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+              📁
+              <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+            </label>
+            <button class="btn btn-icon" onclick="removeImageRow(this)" title="删除">×</button>
+          </div>
+          <div class="pic-preview" style="display:none"></div>
+        </div>
+        <div class="image-row-wrap">
+          <div class="image-row">
+            <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+            <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+              📁
+              <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+            </label>
+            <button class="btn btn-icon" onclick="removeImageRow(this)" title="删除">×</button>
+          </div>
+          <div class="pic-preview" style="display:none"></div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" style="margin-top:8px" onclick="addImageRow()">+ 添加图片</button>
+      <div class="hint" id="multiHint"></div>
+    </div>
+
+    <!-- Advanced options toggle -->
+    <div class="advanced-toggle" onclick="toggleAdvanced()">
+      <span class="chevron" id="chevron">▶</span>
+      高级参数
+    </div>
+
+    <div class="advanced-panel" id="advancedPanel">
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label>宽度 (Width)</label>
+          <select id="width">
+            <option value="1152" selected>1152</option>
+            <option value="768">768</option>
+            <option value="1024">1024</option>
+            <option value="1280">1280</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>高度 (Height)</label>
+          <select id="height">
+            <option value="768" selected>768</option>
+            <option value="512">512</option>
+            <option value="1024">1024</option>
+            <option value="720">720</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>帧率 (FPS)</label>
+          <select id="frameRate">
+            <option value="24" selected>24</option>
+            <option value="30">30</option>
+            <option value="15">15</option>
+            <option value="60">60</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label>帧数 (num_frames)</label>
+          <select id="numFrames">
+            <option value="81">81 (~3.4s @ 24fps)</option>
+            <option value="121" selected>121 (~5s @ 24fps)</option>
+            <option value="161">161 (~6.7s @ 24fps)</option>
+            <option value="241">241 (~10s @ 24fps)</option>
+            <option value="441">441 (~18s @ 24fps)</option>
+          </select>
+          <div class="hint">必须满足 8n+1 格式</div>
+        </div>
+        <div class="field" style="margin:0">
+          <label>随机种子 (Seed)</label>
+          <input type="number" id="seed" placeholder="留空则随机" min="0">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:16px">
+        <label>推理步数 (num_inference_steps)</label>
+        <input type="number" id="inferenceSteps" placeholder="默认由模型决定" min="1" max="100">
+      </div>
+
+      <div class="field" style="margin:0">
+        <label>负向提示词 (Negative Prompt)</label>
+        <textarea id="negativePrompt" placeholder="描述不希望出现的内容，例如：blurry, distorted, low quality, watermark" style="min-height:70px"></textarea>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
+        <span id="generateLabel">生成视频</span>
+      </button>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+</div>
+
+<!-- Generation Card - Image -->
+<div class="card" id="imageCard" style="display:none">
+  <!-- 生图模式二级页签 -->
+  <div class="tabs">
+    <button class="tab active img-mode-tab" data-imgmode="txt2img" onclick="switchImgMode('txt2img')">文本生成图像</button>
+    <button class="tab img-mode-tab" data-imgmode="img2img" onclick="switchImgMode('img2img')">图像生成图像</button>
+    <button class="tab img-mode-tab" data-imgmode="composition" onclick="switchImgMode('composition')">结构/构图保留</button>
+    <button class="tab img-mode-tab" data-imgmode="high_density" onclick="switchImgMode('high_density')">高信息密度优化</button>
+  </div>
+
+  <div class="form-body">
+    <!-- 参考图 URL (图生图及其他模式下显示) -->
+    <div class="field" id="imgRefField" style="display:none">
+      <label>参考图片 URL <span style="color:var(--error)">*</span></label>
+      <div class="image-row-wrap">
+        <div class="image-row">
+          <input type="text" id="imgRefUrl" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+          <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+            📁
+            <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+          </label>
+        </div>
+        <div class="pic-preview" style="display:none"></div>
+      </div>
+      <div class="hint" id="imgRefHint">提供引导图像生成的参考图链接，或选择/粘贴本地图片</div>
+    </div>
+
+    <!-- Prompt -->
+    <div class="field">
+      <label>提示词 (Prompt) <span style="color:var(--error)">*</span></label>
+      <textarea id="imgPrompt" placeholder="描述图像内容、主体、动作、场景、光线和艺术风格…&#10;例如：A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k resolution"></textarea>
+    </div>
+
+    <!-- Advanced options toggle -->
+    <div class="advanced-toggle" onclick="toggleImgAdvanced()">
+      <span class="chevron" id="imgChevron">▶</span>
+      高级参数
+    </div>
+
+    <div class="advanced-panel" id="imgAdvancedPanel">
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label>常用尺寸 (Size Preset)</label>
+          <select id="imgSizePreset" onchange="applyImgSizePreset()">
+            <option value="1024x1024" selected>1:1 正方形 (1024x1024)</option>
+            <option value="768x1024">3:4 竖图 (768x1024)</option>
+            <option value="1024x768">4:3 横图 (1024x768)</option>
+            <option value="512x512">1:1 低清 (512x512)</option>
+          </select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>自定义宽度 (Width)</label>
+          <input type="number" id="imgWidth" value="1024" min="256" max="2048" step="64">
+        </div>
+        <div class="field" style="margin:0">
+          <label>自定义高度 (Height)</label>
+          <input type="number" id="imgHeight" value="1024" min="256" max="2048" step="64">
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="field" style="margin:0">
+          <label>生图模型 (Model)</label>
+          <input type="text" id="imgModel" value="agnes-image-2.1-flash" placeholder="默认: agnes-image-2.1-flash">
+        </div>
+        <div class="field" style="margin:0">
+          <label>随机种子 (Seed)</label>
+          <input type="number" id="imgSeed" placeholder="留空则随机" min="0">
+        </div>
+      </div>
+
+      <div class="field" style="margin-bottom:16px">
+        <label>推理步数 (num_inference_steps)</label>
+        <input type="number" id="imgInferenceSteps" placeholder="默认由模型决定" min="1" max="100">
+      </div>
+
+      <div class="field" style="margin:0">
+        <label>负向提示词 (Negative Prompt)</label>
+        <textarea id="imgNegativePrompt" placeholder="描述不希望出现的内容，例如：blurry, distorted, low quality, watermark" style="min-height:70px"></textarea>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" id="generateImgBtn" onclick="generateImage()">
+        <span id="generateImgLabel">生成图像</span>
+      </button>
+    </div>
+
+    <div class="error-msg" id="imgErrorMsg"></div>
+  </div>
+</div>
+
+<!-- Status Card -->
+<div class="status-card" id="statusCard">
+  <div class="status-header">
+    <div class="status-badge" id="statusBadge">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">-</span>
+    </div>
+    <div class="task-id" id="taskId"></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>生成进度</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div id="statusNote" style="font-size:13px; color:var(--text-muted)"></div>
+  <div class="poll-retry-info" id="pollRetryInfo">
+    <div class="retry-header">
+      <span id="retryTitle"></span>
+      <span id="retryCount"></span>
+    </div>
+    <div class="retry-detail" id="retryDetail"></div>
+  </div>
+</div>
+
+<!-- Result Card - Video -->
+<div class="result-card" id="resultCard">
+  <video id="videoPlayer" controls playsinline></video>
+  <div class="result-footer">
+    <div class="result-meta" id="resultMeta"></div>
+    <a class="btn btn-download" id="downloadBtn" href="#" download="agnes-video.mp4" target="_blank">
+      ⬇ 下载视频
+    </a>
+  </div>
+</div>
+
+<!-- Result Card - Image -->
+<div class="result-card" id="imageResultCard">
+  <div class="image-preview-wrap">
+    <img id="imagePlayer" src="" alt="Generated image">
+  </div>
+  <div class="result-footer">
+    <div class="result-meta" id="imageResultMeta"></div>
+    <a class="btn btn-download" id="imgDownloadBtn" href="#" download="agnes-image.png" target="_blank">
+      ⬇ 下载图片
+    </a>
+  </div>
+</div>
+
+<script>
+  // ── Constants ────────────────────────────────────────────────────────
+  const BASE_URL = '';
+  const MODEL = 'agnes-video-v2.0';
+  const POLL_INTERVAL_MS = 3000;
+
+  // ── State ────────────────────────────────────────────────────────────
+  let currentMediaType = 'video';
+  let currentMode = 'text';
+  let currentImgMode = 'txt2img';
+  let pollTimer = null;
+
+  // ── Init ─────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadApiKey();
+    updateModeUI();
+    applyImgSizePreset();
+
+    // Auto-save API key on change
+    document.getElementById('apiKeyInput').addEventListener('input', saveApiKey);
+  });
+
+  // 一级页签切换逻辑
+  function switchMediaType(type) {
+    currentMediaType = type;
+    document.getElementById('tabVideo').classList.toggle('active', type === 'video');
+    document.getElementById('tabImage').classList.toggle('active', type === 'image');
+
+    const videoCard = document.getElementById('videoCard');
+    const imageCard = document.getElementById('imageCard');
+
+    if (type === 'video') {
+      videoCard.style.display = 'block';
+      imageCard.style.display = 'none';
+      
+      document.getElementById('imageResultCard').classList.remove('visible');
+      if (document.getElementById('videoPlayer').src) {
+        document.getElementById('resultCard').classList.add('visible');
+      }
+      if (pollTimer) {
+        document.getElementById('statusCard').classList.add('visible');
+      } else {
+        document.getElementById('statusCard').classList.remove('visible');
+      }
+    } else {
+      videoCard.style.display = 'none';
+      imageCard.style.display = 'block';
+      
+      document.getElementById('resultCard').classList.remove('visible');
+      document.getElementById('statusCard').classList.remove('visible');
+      if (document.getElementById('imagePlayer').src) {
+        document.getElementById('imageResultCard').classList.add('visible');
+      }
+    }
+  }
+
+  // 图像高级参数展开
+  function toggleImgAdvanced() {
+    const panel = document.getElementById('imgAdvancedPanel');
+    const chevron = document.getElementById('imgChevron');
+    const open = panel.classList.toggle('open');
+    chevron.classList.toggle('open', open);
+  }
+
+  // 图像常用尺寸 preset 应用
+  function applyImgSizePreset() {
+    const preset = document.getElementById('imgSizePreset').value;
+    const [w, h] = preset.split('x');
+    document.getElementById('imgWidth').value = w;
+    document.getElementById('imgHeight').value = h;
+  }
+
+  // 生图二级页签切换逻辑
+  function switchImgMode(mode) {
+    currentImgMode = mode;
+    document.querySelectorAll('.img-mode-tab').forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.imgmode === mode);
+    });
+
+    const refField = document.getElementById('imgRefField');
+    const refHint = document.getElementById('imgRefHint');
+    const prompt = document.getElementById('imgPrompt');
+
+    if (mode === 'txt2img') {
+      refField.style.display = 'none';
+      prompt.placeholder = '描述图像内容、主体、动作、场景、光线和艺术风格…\n例如：A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k resolution';
+    } else {
+      refField.style.display = 'block';
+      if (mode === 'img2img') {
+        refHint.textContent = '提供原图链接，模型将根据你的 Prompt 提示词对该图进行转换、风格化或精细重绘。';
+        prompt.placeholder = '描述你希望对原图进行的修改、转换的风格或期望添加的内容…\n例如：Change the character style to 3D Pixar animation, high detail, colorful background';
+      } else if (mode === 'composition') {
+        refHint.textContent = '结构/构图保留模式：原图将用于精确控制新图像的版式结构、线条、边缘及主体布局，同时生成全新的内容。';
+        prompt.placeholder = '描述你希望生成的新图像内容，将严格套用原图的构图…\n例如：A highly detailed fantasy castle, sunset lighting, dramatic clouds';
+      } else if (mode === 'high_density') {
+        refHint.textContent = '高信息密度优化模式：增强画面细节、背景层次并精细渲染复杂排版，极适合电商主图或海报的高频打磨。';
+        prompt.placeholder = '描述你期望丰富的高密度画面内容与商品展示风格…\n例如：Professional studio shot of a perfume bottle, splashing water, dramatic lighting, luxury poster style';
+      }
+    }
+  }
+
+  // ── API Key persistence ───────────────────────────────────────────────
+  let saveTimeout = null;
+  async function saveApiKey() {
+    const val = document.getElementById('apiKeyInput').value.trim();
+    localStorage.setItem('agnes_api_key', val);
+
+    // 防抖发送，避免高频输入导致请求过多
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(async () => {
+      try {
+        await fetch('/api/key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiKey: val }),
+        });
+      } catch (err) {
+        console.error('保存 API Key 到服务器失败:', err);
+      }
+    }, 500);
+
+    const badge = document.getElementById('savedBadge');
+    badge.classList.add('show');
+    setTimeout(() => badge.classList.remove('show'), 1500);
+  }
+
+  async function loadApiKey() {
+    // 优先从后端获取保存的 API Key
+    try {
+      const res = await fetch('/api/key');
+      const data = await res.json();
+      if (data.apiKey) {
+        document.getElementById('apiKeyInput').value = data.apiKey;
+        return;
+      }
+    } catch (err) {
+      console.error('从服务器加载 API Key 失败:', err);
+    }
+
+    // 备用 fallback：从本地 localStorage 加载
+    const saved = localStorage.getItem('agnes_api_key') || '';
+    document.getElementById('apiKeyInput').value = saved;
+  }
+
+  function getApiKey() {
+    return document.getElementById('apiKeyInput').value.trim();
+  }
+
+  // ── Mode tabs ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentMode = tab.dataset.mode;
+      updateModeUI();
+    });
+  });
+
+  function updateModeUI() {
+    const single = document.getElementById('singleImageField');
+    const multi = document.getElementById('multiImageField');
+    const hint = document.getElementById('multiHint');
+
+    single.style.display = 'none';
+    multi.style.display = 'none';
+
+    if (currentMode === 'image') {
+      single.style.display = 'block';
+    } else if (currentMode === 'multi') {
+      multi.style.display = 'block';
+      hint.textContent = '提供多张参考图，视频将融合这些图像的内容。';
+    } else if (currentMode === 'keyframe') {
+      multi.style.display = 'block';
+      hint.textContent = '第一张为起始帧，最后一张为结束帧，生成帧间平滑过渡。';
+    }
+  }
+
+  // ── Image row management ──────────────────────────────────────────────
+  function addImageRow() {
+    const list = document.getElementById('imageList');
+    const wrap = document.createElement('div');
+    wrap.className = 'image-row-wrap';
+    wrap.innerHTML = `
+      <div class="image-row">
+        <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+        <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+          📁
+          <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+        </label>
+        <button class="btn btn-icon" onclick="removeImageRow(this)" title="删除">×</button>
+      </div>
+      <div class="pic-preview" style="display:none"></div>`;
+    list.appendChild(wrap);
+  }
+
+  function removeImageRow(btn) {
+    const list = document.getElementById('imageList');
+    if (list.children.length > 1) {
+      btn.closest('.image-row-wrap').remove();
+    }
+  }
+
+  function getImageUrls() {
+    return Array.from(document.querySelectorAll('#imageList .image-row input[type="text"]'))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+  }
+
+  // ── Advanced options toggle ───────────────────────────────────────────
+  function toggleAdvanced() {
+    const panel = document.getElementById('advancedPanel');
+    const chevron = document.getElementById('chevron');
+    const open = panel.classList.toggle('open');
+    chevron.classList.toggle('open', open);
+  }
+
+  // 清洗图片数据：去除换行/空格，剥离 data URI 前缀，并补齐 Base64 padding
+  // 关键修复：上游 API 用 Python b64decode 解码时会默认剥离 ':' ';' ','，
+  // 残余长度不是 4 的倍数就报 "Incorrect padding"，因此必须只发送纯 base64 数据
+  function cleanImageData(raw) {
+    if (!raw) return raw;
+    const trimmed = raw.trim();
+    if (!trimmed.startsWith('data:')) return trimmed; // 公网 URL 不做处理
+
+    // 去除所有空白字符（换行、空格、tab）
+    const cleaned = trimmed.replace(/\s+/g, '');
+
+    // 截掉 data URI prefix（data:image/xxx;base64,），只保留 base64 数据
+    const commaIdx = cleaned.indexOf(',');
+    if (commaIdx < 0) return cleaned;
+
+    let dataPart = cleaned.slice(commaIdx + 1);
+
+    // 补齐 base64 padding 至 4 的倍数
+    const paddingNeeded = (4 - (dataPart.length % 4)) % 4;
+    if (paddingNeeded > 0) {
+      dataPart = dataPart + '='.repeat(paddingNeeded);
+    }
+
+    return dataPart;
+  }
+
+  // ── Build request body ────────────────────────────────────────────────
+  function buildBody() {
+    const prompt = document.getElementById('prompt').value.trim();
+    const width = parseInt(document.getElementById('width').value);
+    const height = parseInt(document.getElementById('height').value);
+    const numFrames = parseInt(document.getElementById('numFrames').value);
+    const frameRate = parseInt(document.getElementById('frameRate').value);
+    const seedVal = document.getElementById('seed').value.trim();
+    const inferSteps = document.getElementById('inferenceSteps').value.trim();
+    const negPrompt = document.getElementById('negativePrompt').value.trim();
+
+    const body = {
+      model: MODEL,
+      prompt,
+      width,
+      height,
+      num_frames: numFrames,
+      frame_rate: frameRate,
+    };
+
+    if (seedVal !== '') body.seed = parseInt(seedVal);
+    if (inferSteps !== '') body.num_inference_steps = parseInt(inferSteps);
+    if (negPrompt !== '') body.negative_prompt = negPrompt;
+
+    if (currentMode === 'image') {
+      const url = cleanImageData(document.getElementById('singleImage').value.trim());
+      if (url) body.image = url;
+
+    } else if (currentMode === 'multi') {
+      const rawUrls = getImageUrls();
+      const urls = rawUrls.map(u => cleanImageData(u)).filter(Boolean);
+      if (urls.length > 0) body.extra_body = { image: urls };
+
+    } else if (currentMode === 'keyframe') {
+      const rawUrls = getImageUrls();
+      const urls = rawUrls.map(u => cleanImageData(u)).filter(Boolean);
+      if (urls.length > 0) body.extra_body = { image: urls, mode: 'keyframes' };
+    }
+
+    return body;
+  }
+
+  // ── Generate ──────────────────────────────────────────────────────────
+  async function generate() {
+    const key = getApiKey();
+    if (!key) { showError('请先输入 API Key'); return; }
+
+    const prompt = document.getElementById('prompt').value.trim();
+    if (!prompt) { showError('请输入提示词'); return; }
+
+    clearError();
+    stopPolling();
+    hideResult();
+
+    const btn = document.getElementById('generateBtn');
+    const label = document.getElementById('generateLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spin">⟳</span> 提交任务中…';
+
+    try {
+      const body = buildBody();
+      const res = await fetch(`${BASE_URL}/v1/videos`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': key,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+      }
+
+      const taskId = data.id;
+      showStatusCard(taskId, data.status, data.progress ?? 0);
+      label.innerHTML = '<span class="spin">⟳</span> 生成中…';
+      startPolling(taskId, key);
+
+    } catch (err) {
+      // API Key 无效直接失败
+      if (isAuthError(err.message)) {
+        showError(`认证失败: ${err.message}。请检查 API Key 是否正确。`);
+        btn.disabled = false;
+        label.textContent = '生成视频';
+        return;
+      }
+
+      btn.disabled = false;
+      label.textContent = '生成视频';
+      showError(`请求失败: ${err.message}`);
+    }
+  }
+
+  // ── Polling ───────────────────────────────────────────────────────────
+  let pollErrorCount = 0;
+  const MAX_RETRY_SERVER = 10;  // 服务端临时错误最多重试次数
+  const MAX_RETRY_NETWORK = 5;  // 网络错误最多重试次数
+
+  function startPolling(taskId, key) {
+    pollErrorCount = 0;
+    hideRetryInfo();
+    pollTimer = setInterval(() => pollTask(taskId, key), POLL_INTERVAL_MS);
+    pollTask(taskId, key);
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  // 判断是否为服务端临时错误
+  function isServerTempError(msg) {
+    if (!msg) return false;
+    const lower = msg.toLowerCase();
+    const patterns = ['division by zero', 'internal error', 'temporarily unavailable', 'service unavailable'];
+    return patterns.some(p => lower.includes(p));
+  }
+
+  // 判断是否为 API Key 无效
+  function isAuthError(msg) {
+    if (!msg) return false;
+    const lower = msg.toLowerCase();
+    return lower.includes('api key') || lower.includes('auth') || lower.includes('401') || lower.includes('unauthorized');
+  }
+
+  // 显示重试提示
+  function showRetryInfo(errMsg, current, max, isServerErr) {
+    const el = document.getElementById('pollRetryInfo');
+    const title = document.getElementById('retryTitle');
+    const count = document.getElementById('retryCount');
+    const detail = document.getElementById('retryDetail');
+
+    el.classList.add('visible');
+    el.classList.remove('warn', 'danger');
+    el.classList.add(current >= max - 1 ? 'danger' : 'warn');
+
+    const typeLabel = isServerErr ? '⚠ 服务端异常' : '⚠ 网络异常';
+    title.textContent = typeLabel;
+    count.textContent = `重试 ${current}/${max}`;
+
+    const now = new Date().toLocaleTimeString();
+    detail.textContent = `[${now}] ${errMsg}　·　${POLL_INTERVAL_MS / 1000}秒后自动重试…`;
+  }
+
+  // 隐藏重试提示
+  function hideRetryInfo() {
+    const el = document.getElementById('pollRetryInfo');
+    el.classList.remove('visible', 'warn', 'danger');
+  }
+
+  async function pollTask(taskId, key) {
+    try {
+      const res = await fetch(`${BASE_URL}/v1/videos/${taskId}?_t=${Date.now()}`, {
+        headers: { 'X-Api-Key': key },
+      });
+
+      const data = await res.json();
+
+      // 1. HTTP 级别错误（非 2xx），直接抛出让 catch 处理
+      if (!res.ok && !data.status) {
+        throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+      }
+
+      // 2. 任务已有明确终态，优先处理（status 优先于 error 字段）
+      if (data.status === 'completed') {
+        pollErrorCount = 0;
+        hideRetryInfo();
+        updateStatusCard(taskId, data.status, data.progress ?? 0, data);
+        stopPolling();
+        resetBtn();
+        showResult(data);
+        return;
+      }
+
+      if (data.status === 'failed') {
+        hideRetryInfo();
+        updateStatusCard(taskId, data.status, data.progress ?? 0, data);
+        stopPolling();
+        resetBtn();
+        const reason = data.error?.message || '未知原因';
+        showError(`视频生成失败: ${reason}`);
+        return;
+      }
+
+      // 3. 服务端返回了 error 但没有终态（如 division by zero 临时错误）
+      if (data.error) {
+        throw new Error(data.error?.message || data.message || '服务端返回异常');
+      }
+
+      // 4. 正常轮询中，更新进度
+      pollErrorCount = 0;
+      hideRetryInfo();
+      updateStatusCard(taskId, data.status, data.progress ?? 0, data);
+
+    } catch (err) {
+      // API Key 无效直接失败，不重试
+      if (isAuthError(err.message)) {
+        showError(`认证失败: ${err.message}。请检查 API Key 是否正确。`);
+        stopPolling();
+        resetBtn();
+        return;
+      }
+
+      pollErrorCount++;
+      const serverErr = isServerTempError(err.message);
+      // 503 Service Unavailable 也属于服务端临时错误
+      const maxRetry = (serverErr || err.message.includes('503')) ? MAX_RETRY_SERVER : MAX_RETRY_NETWORK;
+
+      console.warn(`[轮询异常 ${pollErrorCount}/${maxRetry}]`, err.message);
+
+      // 在 UI 上显示重试状态
+      showRetryInfo(err.message, pollErrorCount, maxRetry, serverErr);
+
+      if (pollErrorCount >= maxRetry) {
+        const hint = serverErr
+          ? `服务端持续报错 (${err.message})，已重试 ${maxRetry} 次仍未恢复。请稍后重新提交任务。`
+          : `网络请求连续失败: ${err.message}。请检查网络连接或代理设置。`;
+        showError(hint);
+        stopPolling();
+        resetBtn();
+      }
+    }
+  }
+
+  // ── Status card UI ────────────────────────────────────────────────────
+  const STATUS_META = {
+    queued:      { label: '排队等待', cls: 'badge-queued',       pulse: false },
+    in_progress: { label: '生成中',   cls: 'badge-in_progress',  pulse: true  },
+    completed:   { label: '已完成',   cls: 'badge-completed',    pulse: false },
+    failed:      { label: '失败',     cls: 'badge-failed',       pulse: false },
+  };
+
+  function showStatusCard(taskId, status, progress) {
+    const card = document.getElementById('statusCard');
+    card.classList.add('visible');
+    document.getElementById('taskId').textContent = `Task ID: ${taskId}`;
+    updateStatusCard(taskId, status, progress, {});
+  }
+
+  function updateStatusCard(taskId, status, progress, data) {
+    const meta = STATUS_META[status] || { label: status, cls: '', pulse: false };
+
+    const badge = document.getElementById('statusBadge');
+    badge.className = `status-badge ${meta.cls}`;
+
+    const dot = document.getElementById('statusDot');
+    dot.className = `dot${meta.pulse ? ' pulse' : ''}`;
+
+    document.getElementById('statusText').textContent = meta.label;
+
+    const pct = Math.round(progress);
+    document.getElementById('progressPct').textContent = `${pct}%`;
+    document.getElementById('progressFill').style.width = `${pct}%`;
+
+    const note = document.getElementById('statusNote');
+    if (status === 'completed' && data.seconds) {
+      note.textContent = `视频时长: ${data.seconds}s · 分辨率: ${data.size || ''}`;
+    } else if (status === 'queued') {
+      note.textContent = '任务已提交，等待服务器调度…';
+    } else if (status === 'in_progress') {
+      note.textContent = '视频生成中，请稍候（约需 1–3 分钟）…';
+    } else {
+      note.textContent = '';
+    }
+  }
+
+  // ── Result card UI ────────────────────────────────────────────────────
+  function showResult(data) {
+    const card = document.getElementById('resultCard');
+    const video = document.getElementById('videoPlayer');
+    const meta = document.getElementById('resultMeta');
+    const dlBtn = document.getElementById('downloadBtn');
+
+    // 兼容上游官方 API 实际返回的视频链接字段 remixed_from_video_id（文档为 video_url）
+    const rawUrl = data.video_url || data.remixed_from_video_id;
+
+    // 通过本地后端进行代理中转，彻底破除国内直接访问 storage.googleapis.com 被墙的 ERR_CONNECTION_CLOSED 限制！
+    const videoUrl = rawUrl ? `${BASE_URL}/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
+
+    video.src = videoUrl;
+    video.load();
+    video.play().catch(() => {});
+
+    dlBtn.href = videoUrl;
+
+    const dur = data.seconds ? `时长 ${data.seconds}s` : '';
+    const size = data.size ? `· 分辨率 ${data.size}` : '';
+    const usage = data.usage?.duration_seconds ? `· 生成耗时 ${data.usage.duration_seconds}s` : '';
+    meta.innerHTML = `<span>${dur}</span> ${size} ${usage}`;
+
+    card.classList.add('visible');
+  }
+
+  function hideResult() {
+    document.getElementById('resultCard').classList.remove('visible');
+    const video = document.getElementById('videoPlayer');
+    video.pause();
+    video.src = '';
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function resetBtn() {
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = false;
+    document.getElementById('generateLabel').textContent = '生成视频';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearError() {
+    document.getElementById('errorMsg').classList.remove('visible');
+  }
+
+  // ── Generate Image ──────────────────────────────────────────────────
+  async function generateImage() {
+    const key = getApiKey();
+    if (!key) { showImgError('请先输入 API Key'); return; }
+
+    const prompt = document.getElementById('imgPrompt').value.trim();
+    if (!prompt) { showImgError('请输入提示词'); return; }
+
+    // 校验非文生图模式下的参考图 URL
+    let refUrl = '';
+    if (currentImgMode !== 'txt2img') {
+      refUrl = cleanImageData(document.getElementById('imgRefUrl').value.trim());
+      if (!refUrl) { showImgError('请先输入参考图片 URL'); return; }
+    }
+
+    clearImgError();
+    hideImgResult();
+
+    const btn = document.getElementById('generateImgBtn');
+    const label = document.getElementById('generateImgLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spin">⟳</span> 图像生成中…';
+
+    const width = parseInt(document.getElementById('imgWidth').value) || 1024;
+    const height = parseInt(document.getElementById('imgHeight').value) || 1024;
+    const model = document.getElementById('imgModel').value.trim() || 'agnes-image-2.1-flash';
+    const seedVal = document.getElementById('imgSeed').value.trim();
+    const stepsVal = document.getElementById('imgInferenceSteps').value.trim();
+    const negPrompt = document.getElementById('imgNegativePrompt').value.trim();
+
+    const body = {
+      model: model,
+      prompt: prompt,
+      size: `${width}x${height}`,
+      width: width,
+      height: height,
+      n: 1
+    };
+
+    // 注入图像引导模式的参数
+    if (currentImgMode !== 'txt2img') {
+      body.image = refUrl;
+      body.mode = currentImgMode;
+      body.extra_body = {
+        image: refUrl,
+        mode: currentImgMode
+      };
+    }
+
+    if (seedVal !== '') body.seed = parseInt(seedVal);
+    if (stepsVal !== '') body.num_inference_steps = parseInt(stepsVal);
+    if (negPrompt !== '') body.negative_prompt = negPrompt;
+
+    try {
+      const res = await fetch(`${BASE_URL}/v1/images/generations`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': key,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+      }
+
+      const imageUrl = data.data?.[0]?.url;
+      if (!imageUrl) {
+        throw new Error('未获取到有效的图像 URL 链接');
+      }
+
+      showImgResult(imageUrl, width, height);
+
+    } catch (err) {
+      showImgError(`请求失败: ${err.message}`);
+    } finally {
+      btn.disabled = false;
+      label.textContent = '生成图像';
+    }
+  }
+
+  function showImgResult(url, width, height) {
+    const card = document.getElementById('imageResultCard');
+    const img = document.getElementById('imagePlayer');
+    const meta = document.getElementById('imageResultMeta');
+    const dlBtn = document.getElementById('imgDownloadBtn');
+
+    img.src = url;
+    dlBtn.href = url;
+    
+    meta.innerHTML = `<span>尺寸: ${width}x${height}</span> · 格式: PNG`;
+    card.classList.add('visible');
+  }
+
+  function hideImgResult() {
+    document.getElementById('imageResultCard').classList.remove('visible');
+    document.getElementById('imagePlayer').src = '';
+  }
+
+  function showImgError(msg) {
+    const el = document.getElementById('imgErrorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearImgError() {
+    document.getElementById('imgErrorMsg').classList.remove('visible');
+  }
+
+  // ── Handle file select/paste/drop for images ───────────────────────────
+  function handleFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const textInput = input.closest('.image-row').querySelector('input[type="text"]');
+    processImageFile(file, textInput);
+    input.value = ''; // 重置 file input 允许重复选择相同文件
+  }
+
+  function handleInputPaste(e, inputEl) {
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].kind === 'file' && items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        processImageFile(file, inputEl);
+        e.preventDefault();
+        break;
+      }
+    }
+  }
+
+  function handleInputDrop(e, inputEl) {
+    e.preventDefault();
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type.startsWith('image/')) {
+      processImageFile(files[0], inputEl);
+    }
+  }
+
+  function processImageFile(file, inputEl) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Data = e.target.result;
+      if (!base64Data) {
+        showError('图片读取失败，请重新选择。');
+        return;
+      }
+      // FileReader.readAsDataURL 理论上不会截断，但加上健壮性校验
+      showInputPicPreview(inputEl, base64Data, file.name);
+    };
+    reader.onerror = function() {
+      showError('图片文件读取失败，请重新选择。');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function showInputPicPreview(inputEl, base64OrUrl, filename = '') {
+    // 如果是 data URI，去掉换行和不必要空格，确保 padding 完整
+    let cleanData = base64OrUrl;
+    if (base64OrUrl.startsWith('data:')) {
+      cleanData = base64OrUrl.replace(/\r?\n/g, '').replace(/\s+/g, '');
+      // 确保 base64 padding: 长度不是 4 的倍数时补 =
+      const contentPart = cleanData.indexOf(',') + 1;
+      if (contentPart > 0) {
+        const dataOnly = cleanData.slice(contentPart);
+        const paddingNeeded = (4 - (dataOnly.length % 4)) % 4;
+        if (paddingNeeded > 0) {
+          cleanData = cleanData.slice(0, contentPart) + dataOnly + '='.repeat(paddingNeeded);
+        }
+      }
+    }
+
+    inputEl.value = cleanData;
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const wrap = inputEl.closest('.image-row-wrap');
+    if (!wrap) return;
+
+    let preview = wrap.querySelector('.pic-preview');
+    if (!preview) return;
+
+    const displayInfo = filename ? `本地图片: ${filename}` : (base64OrUrl.startsWith('data:') ? '本地图片 Base64' : base64OrUrl);
+    preview.innerHTML = `
+      <img src="${cleanData}" alt="Preview">
+      <div class="pic-preview-info" title="${displayInfo}">${displayInfo}</div>
+      <div class="pic-preview-del" title="清除">×</div>
+    `;
+
+    preview.querySelector('.pic-preview-del').addEventListener('click', () => {
+      removeInputPicPreview(inputEl);
+    });
+
+    preview.style.display = 'flex';
+  }
+
+  function removeInputPicPreview(inputEl) {
+    inputEl.value = '';
+    inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+
+    const wrap = inputEl.closest('.image-row-wrap');
+    if (!wrap) return;
+
+    const preview = wrap.querySelector('.pic-preview');
+    if (preview) {
+      preview.style.display = 'none';
+      preview.innerHTML = '';
+    }
+  }
+
+  // 动态监听公网图片链接的输入，并实时生成预览
+  document.addEventListener('input', (e) => {
+    if (e.target.matches('.image-row input[type="text"]')) {
+      const val = e.target.value.trim();
+      const wrap = e.target.closest('.image-row-wrap');
+      if (!wrap) return;
+      const preview = wrap.querySelector('.pic-preview');
+
+      if (val.startsWith('http://') || val.startsWith('https://')) {
+        if (preview) {
+          preview.innerHTML = `
+            <img src="${val}" alt="Preview" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2371717a%22 stroke-width=%222%22><rect x=%223%22 y=%223%22 width=%2218%22 height=%2218%22 rx=%222%22/><circle cx=%228.5%22 cy=%228.5%22 r=%221.5%22/><path d=%22M21 15l-5-5L5 21%22/></svg>'">
+            <div class="pic-preview-info" title="${val}">${val}</div>
+            <div class="pic-preview-del" title="清除">×</div>
+          `;
+          preview.querySelector('.pic-preview-del').addEventListener('click', () => {
+            removeInputPicPreview(e.target);
+          });
+          preview.style.display = 'flex';
+        }
+      } else if (val === '') {
+        if (preview) {
+          preview.style.display = 'none';
+          preview.innerHTML = '';
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
