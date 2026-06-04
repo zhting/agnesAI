@@ -1,6 +1,9 @@
 # Sensitive — Agnes API key
 key.txt
 
+# 用户本地配置（模型选择、模型列表缓存）
+config.json
+
 # Node
 node_modules/
 npm-debug.log*

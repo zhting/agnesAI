@@ -57,31 +57,35 @@
     .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
     .logo span { font-size: 12px; color: var(--text-muted); }
 
-    /* ─── API Key ─── */
-    .api-key-wrap {
+    /* ─── Main wrapper (split layout) ─── */
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
       display: flex;
-      gap: 8px;
-      align-items: center;
+      gap: 24px;
+      align-items: flex-start;
     }
 
-    .api-key-wrap input {
-      width: 200px;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-      transition: border-color .2s;
+    .main-left {
+      flex: 1;
+      min-width: 0;
     }
 
-    .api-key-wrap input:focus { border-color: var(--accent); }
+    .main-right {
+      width: 420px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+    }
 
     /* ─── Main card ─── */
     .card {
-      max-width: 800px;
-      margin: 0 auto 24px;
+      margin-bottom: 24px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -222,8 +226,7 @@
 
     /* ─── Status card ─── */
     .status-card {
-      max-width: 800px;
-      margin: 0 auto 24px;
+      margin: 0;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -292,10 +295,21 @@
       transition: width .5s ease;
     }
 
+    /* ─── Result placeholder ─── */
+    .result-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      text-align: center;
+    }
+
+    .result-placeholder.hidden { display: none; }
+
     /* ─── Video result ─── */
     .result-card {
-      max-width: 800px;
-      margin: 0 auto;
+      margin: 0;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
@@ -387,18 +401,9 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .spin { display: inline-block; animation: spin .8s linear infinite; }
 
-    /* ─── Saved indicator ─── */
-    .saved-badge {
-      font-size: 11px; color: var(--success);
-      opacity: 0; transition: opacity .3s;
-    }
-
-    .saved-badge.show { opacity: 1; }
-
     /* ─── Media Type Tabs 一级页签 ─── */
     .media-tabs {
-      max-width: 800px;
-      margin: -8px auto 24px;
+      margin: -8px 0 24px;
       display: flex;
       background: rgba(24, 24, 27, 0.6);
       border: 1px solid var(--border);
@@ -406,6 +411,7 @@
       border-radius: 12px;
       padding: 4px;
       gap: 4px;
+      max-width: 800px;
     }
 
     .media-tab {
@@ -531,6 +537,190 @@
     .pic-preview-del:hover {
       color: var(--error);
     }
+
+    /* ─── 聊天 Card ─── */
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-header-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    .chat-model-select {
+      width: auto;
+      min-width: 220px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .chat-messages {
+      min-height: 400px;
+      max-height: 60vh;
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #0f0f12;
+    }
+
+    .chat-empty {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      padding: 60px 0;
+    }
+
+    .chat-bubble {
+      max-width: 86%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-bubble.assistant {
+      align-self: flex-start;
+      background: var(--surface2);
+      color: var(--text);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border);
+    }
+
+    .chat-bubble.assistant.streaming::after {
+      content: '▍';
+      color: var(--accent);
+      animation: pulse 1s infinite;
+      margin-left: 2px;
+    }
+
+    .chat-input-area {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .chat-input-area textarea {
+      flex: 1;
+      min-height: 50px;
+      max-height: 180px;
+    }
+
+    /* ─── 管理 Card ─── */
+    .admin-section {
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .admin-section:last-of-type {
+      border-bottom: none;
+      margin-bottom: 16px;
+      padding-bottom: 0;
+    }
+
+    .admin-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .admin-section code {
+      font-family: 'Courier New', monospace;
+      background: var(--surface2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .admin-success {
+      background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.3);
+      color: var(--success);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .admin-success.visible { display: block; }
+
+    .model-table-wrap {
+      max-height: 360px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .model-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .model-table th {
+      text-align: left;
+      padding: 10px 12px;
+      background: var(--surface2);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+    }
+
+    .model-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .model-table tr:last-child td { border-bottom: none; }
+
+    .model-table input[type="text"] {
+      width: 100%;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .model-table select {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .model-table input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
   </style>
 </head>
 <body>
@@ -544,17 +734,17 @@
       <span>多媒体生成 · 自由 AI 接口</span>
     </div>
   </div>
-
-  <div class="api-key-wrap">
-    <span class="saved-badge" id="savedBadge">✓ 已保存</span>
-    <input type="password" id="apiKeyInput" placeholder="输入 API Key" autocomplete="off">
-  </div>
 </header>
 
 <!-- 一级媒体选择页签 -->
+<div class="main-wrapper">
+  <div class="main-left">
+
 <div class="media-tabs">
   <button class="media-tab active" id="tabVideo" onclick="switchMediaType('video')">🎬 视频生成</button>
   <button class="media-tab" id="tabImage" onclick="switchMediaType('image')">🎨 图像生成</button>
+  <button class="media-tab" id="tabChat" onclick="switchMediaType('chat')">💬 聊天</button>
+  <button class="media-tab" id="tabAdmin" onclick="switchMediaType('admin')">⚙️ 管理</button>
 </div>
 
 <!-- Generation Card - Video -->
@@ -624,17 +814,36 @@
 
     <!-- Advanced options toggle -->
     <div class="advanced-toggle" onclick="toggleAdvanced()">
-      <span class="chevron" id="chevron">▶</span>
+      <span class="chevron open" id="chevron">▶</span>
       高级参数
     </div>
 
-    <div class="advanced-panel" id="advancedPanel">
+    <div class="advanced-panel open" id="advancedPanel">
+      <div class="field" style="margin-bottom:16px">
+        <label>画面比例 (Aspect Ratio)</label>
+        <select id="videoAspect" onchange="applyVideoAspect()">
+          <option value="16:9" selected>16:9 横屏</option>
+          <option value="9:16">9:16 竖屏</option>
+          <option value="1:1">1:1 正方形</option>
+          <option value="4:3">4:3 横图</option>
+          <option value="3:4">3:4 竖图</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+
+      <div class="field" style="margin-bottom:16px">
+        <label>视频模型 (Model)</label>
+        <select id="videoModelSelect"></select>
+        <div class="hint">默认值在 ⚙️ 管理 页设置。若列表为空，请先在管理页配置模型。</div>
+      </div>
+
       <div class="grid-3" style="margin-bottom:16px">
         <div class="field" style="margin:0">
           <label>宽度 (Width)</label>
           <select id="width">
             <option value="1152" selected>1152</option>
             <option value="768">768</option>
+            <option value="720">720</option>
             <option value="1024">1024</option>
             <option value="1280">1280</option>
           </select>
@@ -644,8 +853,9 @@
           <select id="height">
             <option value="768" selected>768</option>
             <option value="512">512</option>
-            <option value="1024">1024</option>
             <option value="720">720</option>
+            <option value="1024">1024</option>
+            <option value="1280">1280</option>
           </select>
         </div>
         <div class="field" style="margin:0">
@@ -734,19 +944,25 @@
 
     <!-- Advanced options toggle -->
     <div class="advanced-toggle" onclick="toggleImgAdvanced()">
-      <span class="chevron" id="imgChevron">▶</span>
+      <span class="chevron open" id="imgChevron">▶</span>
       高级参数
     </div>
 
-    <div class="advanced-panel" id="imgAdvancedPanel">
+    <div class="advanced-panel open" id="imgAdvancedPanel">
       <div class="grid-3" style="margin-bottom:16px">
         <div class="field" style="margin:0">
           <label>常用尺寸 (Size Preset)</label>
           <select id="imgSizePreset" onchange="applyImgSizePreset()">
-            <option value="1024x1024" selected>1:1 正方形 (1024x1024)</option>
-            <option value="768x1024">3:4 竖图 (768x1024)</option>
-            <option value="1024x768">4:3 横图 (1024x768)</option>
-            <option value="512x512">1:1 低清 (512x512)</option>
+            <option value="1:1" selected>1:1 正方形 (1024x1024)</option>
+            <option value="3:4">3:4 竖图 (768x1024)</option>
+            <option value="4:3">4:3 横图 (1024x768)</option>
+            <option value="9:16">9:16 竖屏 (720x1280)</option>
+            <option value="16:9">16:9 横屏 (1280x720)</option>
+            <option value="9:21">9:21 竖屏 FHD (768x1792)</option>
+            <option value="21:9">21:9 横屏 FHD (1792x768)</option>
+            <option value="2:3">2:3 竖图 (683x1024)</option>
+            <option value="3:2">3:2 横图 (1024x683)</option>
+            <option value="custom">自定义</option>
           </select>
         </div>
         <div class="field" style="margin:0">
@@ -762,7 +978,7 @@
       <div class="grid-2" style="margin-bottom:16px">
         <div class="field" style="margin:0">
           <label>生图模型 (Model)</label>
-          <input type="text" id="imgModel" value="agnes-image-2.1-flash" placeholder="默认: agnes-image-2.1-flash">
+          <select id="imgModel"></select>
         </div>
         <div class="field" style="margin:0">
           <label>随机种子 (Seed)</label>
@@ -792,113 +1008,246 @@
   </div>
 </div>
 
-<!-- Status Card -->
-<div class="status-card" id="statusCard">
-  <div class="status-header">
-    <div class="status-badge" id="statusBadge">
-      <span class="dot" id="statusDot"></span>
-      <span id="statusText">-</span>
+<!-- Generation Card - Chat -->
+<div class="card" id="chatCard" style="display:none">
+  <div class="chat-header">
+    <div class="chat-header-left">
+      <label class="chat-header-label">模型：</label>
+      <select id="chatModelSelect" class="chat-model-select"></select>
     </div>
-    <div class="task-id" id="taskId"></div>
+    <button class="btn btn-ghost" onclick="clearChat()">🗑 清空对话</button>
   </div>
 
-  <div class="progress-wrap">
-    <div class="progress-label">
-      <span>生成进度</span>
-      <span id="progressPct">0%</span>
-    </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-    </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-empty">开始一次对话吧 · Ctrl+Enter 发送</div>
   </div>
 
-  <div id="statusNote" style="font-size:13px; color:var(--text-muted)"></div>
-  <div class="poll-retry-info" id="pollRetryInfo">
-    <div class="retry-header">
-      <span id="retryTitle"></span>
-      <span id="retryCount"></span>
-    </div>
-    <div class="retry-detail" id="retryDetail"></div>
+  <div class="chat-input-area">
+    <textarea id="chatInput" placeholder="输入消息… (Ctrl+Enter 发送)" rows="3" onkeydown="handleChatKeydown(event)"></textarea>
+    <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()" style="width:auto; padding:10px 24px">
+      <span id="chatSendLabel">发送</span>
+    </button>
   </div>
+
+  <div class="error-msg" id="chatErrorMsg" style="margin:0 24px 16px"></div>
 </div>
 
-<!-- Result Card - Video -->
-<div class="result-card" id="resultCard">
-  <video id="videoPlayer" controls playsinline></video>
-  <div class="result-footer">
-    <div class="result-meta" id="resultMeta"></div>
-    <a class="btn btn-download" id="downloadBtn" href="#" download="agnes-video.mp4" target="_blank">
-      ⬇ 下载视频
-    </a>
-  </div>
-</div>
+<!-- Generation Card - Admin -->
+<div class="card" id="adminCard" style="display:none">
+  <div class="form-body">
 
-<!-- Result Card - Image -->
-<div class="result-card" id="imageResultCard">
-  <div class="image-preview-wrap">
-    <img id="imagePlayer" src="" alt="Generated image">
+    <!-- ── API Token ── -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🔑 API Token</h3>
+      <div class="field">
+        <label>Agnes API Key</label>
+        <div class="image-row">
+          <input type="password" id="adminApiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+          <button class="btn btn-ghost" onclick="toggleKeyVisibility()" title="显示/隐藏">👁</button>
+          <button class="btn btn-primary" style="width:auto; padding:10px 20px" onclick="saveAdminApiKey()">保存</button>
+        </div>
+        <div class="hint">保存到本地 <code>key.txt</code>，不会上传到 GitHub（已配置 .gitignore）。</div>
+      </div>
+    </div>
+
+    <!-- ── 模型列表 ── -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">🧠 模型列表</h3>
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap">
+        <button class="btn btn-primary" style="width:auto; padding:10px 18px" onclick="fetchModelsFromApi()">
+          <span id="fetchModelsLabel">🔄 从官方拉取最新模型</span>
+        </button>
+        <button class="btn btn-ghost" onclick="addModelRow()">+ 手动添加模型</button>
+        <button class="btn btn-ghost" onclick="resetModelsToDefault()" title="恢复内置 video/image 模型">↺ 重置</button>
+      </div>
+
+      <div class="model-table-wrap">
+        <table class="model-table" id="modelTable">
+          <thead>
+            <tr>
+              <th style="width:50%">模型 ID</th>
+              <th style="width:22%">类型</th>
+              <th style="width:14%">启用</th>
+              <th style="width:14%"></th>
+            </tr>
+          </thead>
+          <tbody id="modelTableBody"></tbody>
+        </table>
+      </div>
+      <div class="hint" id="modelTableHint">点"拉取最新模型"获取列表，或手动添加（适用于 /v1/models 不可用时）。</div>
+    </div>
+
+    <!-- ── 默认模型 ── -->
+    <div class="admin-section">
+      <h3 class="admin-section-title">⭐ 默认模型</h3>
+      <div class="grid-3">
+        <div class="field" style="margin:0">
+          <label>🎬 视频默认模型</label>
+          <select id="defaultVideoModel"></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>🎨 图像默认模型</label>
+          <select id="defaultImageModel"></select>
+        </div>
+        <div class="field" style="margin:0">
+          <label>💬 聊天默认模型</label>
+          <select id="defaultChatModel"></select>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:20px">
+      <button class="btn btn-primary" onclick="saveAdminConfig()">💾 保存配置</button>
+    </div>
+
+    <div class="error-msg" id="adminErrorMsg"></div>
+    <div class="admin-success" id="adminSuccessMsg"></div>
   </div>
-  <div class="result-footer">
-    <div class="result-meta" id="imageResultMeta"></div>
-    <a class="btn btn-download" id="imgDownloadBtn" href="#" download="agnes-image.png" target="_blank">
-      ⬇ 下载图片
-    </a>
-  </div>
-</div>
+  </div><!-- end adminCard -->
+  </div><!-- end main-left -->
+
+  <!-- ─── Right panel: status / results ─── -->
+  <div class="main-right">
+    <!-- Placeholder shown when no result -->
+    <div class="result-placeholder" id="resultPlaceholder">
+      <div style="font-size:48px; margin-bottom:12px; opacity:0.5">🎬</div>
+      <div style="font-size:14px; color:var(--text-muted); font-weight:500; margin-bottom:6px">等待生成</div>
+      <div style="font-size:12px; color:var(--text-muted); opacity:0.7">在左侧提交生图或生视频任务，结果将显示在这里</div>
+    </div>
+
+    <!-- Status Card -->
+    <div class="status-card" id="statusCard">
+      <div class="status-header">
+        <div class="status-badge" id="statusBadge">
+          <span class="dot" id="statusDot"></span>
+          <span id="statusText">-</span>
+        </div>
+        <div class="task-id" id="taskId"></div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-label">
+          <span>生成进度</span>
+          <span id="progressPct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div id="statusNote" style="font-size:13px; color:var(--text-muted)"></div>
+      <div class="poll-retry-info" id="pollRetryInfo">
+        <div class="retry-header">
+          <span id="retryTitle"></span>
+          <span id="retryCount"></span>
+        </div>
+        <div class="retry-detail" id="retryDetail"></div>
+      </div>
+    </div>
+
+    <!-- Result Card - Video -->
+    <div class="result-card" id="resultCard">
+      <video id="videoPlayer" controls playsinline></video>
+      <div class="result-footer">
+        <div class="result-meta" id="resultMeta"></div>
+        <a class="btn btn-download" id="downloadBtn" href="#" download="agnes-video.mp4" target="_blank">
+          ⬇ 下载视频
+        </a>
+      </div>
+    </div>
+
+    <!-- Result Card - Image -->
+    <div class="result-card" id="imageResultCard">
+      <div class="image-preview-wrap">
+        <img id="imagePlayer" src="" alt="" style="display:none">
+      </div>
+      <div class="result-footer">
+        <div class="result-meta" id="imageResultMeta"></div>
+        <button class="btn btn-download" id="imgDownloadBtn">
+          ⬇ 下载图片
+        </button>
+      </div>
+    </div>
+  </div><!-- end main-right -->
+  </div><!-- end main-wrapper -->
 
 <script>
   // ── Constants ────────────────────────────────────────────────────────
   const BASE_URL = '';
-  const MODEL = 'agnes-video-v2.0';
   const POLL_INTERVAL_MS = 3000;
+
+  // 内置回落模型（/v1/models 不可用时使用，与文档中提及的模型保持一致）
+  const DEFAULT_MODELS = [
+    { id: 'agnes-video-v2.0',     type: 'video', enabled: true },
+    { id: 'agnes-image-2.1-flash', type: 'image', enabled: true },
+  ];
 
   // ── State ────────────────────────────────────────────────────────────
   let currentMediaType = 'video';
   let currentMode = 'text';
   let currentImgMode = 'txt2img';
   let pollTimer = null;
+  let cachedApiKey = '';
+  let appConfig = {
+    videoModel: 'agnes-video-v2.0',
+    imageModel: 'agnes-image-2.1-flash',
+    chatModel: '',
+    modelList: [...DEFAULT_MODELS],
+    modelListUpdatedAt: ''
+  };
 
   // ── Init ─────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
     await loadApiKey();
+    await loadConfig();
+    refreshModelSelects();
+    renderModelTable();
     updateModeUI();
     applyImgSizePreset();
-
-    // Auto-save API key on change
-    document.getElementById('apiKeyInput').addEventListener('input', saveApiKey);
+    loadChatHistory();
   });
 
   // 一级页签切换逻辑
   function switchMediaType(type) {
     currentMediaType = type;
-    document.getElementById('tabVideo').classList.toggle('active', type === 'video');
-    document.getElementById('tabImage').classList.toggle('active', type === 'image');
+    ['Video', 'Image', 'Chat', 'Admin'].forEach(t => {
+      const el = document.getElementById('tab' + t);
+      if (el) el.classList.toggle('active', type === t.toLowerCase());
+    });
 
-    const videoCard = document.getElementById('videoCard');
-    const imageCard = document.getElementById('imageCard');
+    const cards = {
+      video: document.getElementById('videoCard'),
+      image: document.getElementById('imageCard'),
+      chat:  document.getElementById('chatCard'),
+      admin: document.getElementById('adminCard'),
+    };
+
+    Object.entries(cards).forEach(([k, el]) => {
+      if (el) el.style.display = (k === type) ? 'block' : 'none';
+    });
+
+    // 结果/状态卡片的可见性逻辑
+    const videoResult = document.getElementById('resultCard');
+    const imageResult = document.getElementById('imageResultCard');
+    const statusCard = document.getElementById('statusCard');
+    const placeholder = document.getElementById('resultPlaceholder');
+
+    videoResult.classList.remove('visible');
+    imageResult.classList.remove('visible');
+    statusCard.classList.remove('visible');
+
+    // 默认显示占位符，有结果/状态时隐藏
+    placeholder.classList.add('hidden');
 
     if (type === 'video') {
-      videoCard.style.display = 'block';
-      imageCard.style.display = 'none';
-      
-      document.getElementById('imageResultCard').classList.remove('visible');
-      if (document.getElementById('videoPlayer').src) {
-        document.getElementById('resultCard').classList.add('visible');
-      }
-      if (pollTimer) {
-        document.getElementById('statusCard').classList.add('visible');
-      } else {
-        document.getElementById('statusCard').classList.remove('visible');
-      }
+      if (document.getElementById('videoPlayer').src) videoResult.classList.add('visible');
+      else if (pollTimer) statusCard.classList.add('visible');
+      else placeholder.classList.remove('hidden');
+    } else if (type === 'image') {
+      if (document.getElementById('imagePlayer').style.display !== 'none') imageResult.classList.add('visible');
+      else placeholder.classList.remove('hidden');
     } else {
-      videoCard.style.display = 'none';
-      imageCard.style.display = 'block';
-      
-      document.getElementById('resultCard').classList.remove('visible');
-      document.getElementById('statusCard').classList.remove('visible');
-      if (document.getElementById('imagePlayer').src) {
-        document.getElementById('imageResultCard').classList.add('visible');
-      }
+      placeholder.classList.remove('hidden');
     }
   }
 
@@ -910,12 +1259,42 @@
     chevron.classList.toggle('open', open);
   }
 
+  // 视频比例自动填充
+  function applyVideoAspect() {
+    const map = {
+      '16:9': [1280, 720],
+      '9:16': [720, 1280],
+      '1:1':  [1024, 1024],
+      '4:3':  [1024, 768],
+      '3:4':  [768, 1024],
+      'custom': null,
+    };
+    const [w, h] = map[document.getElementById('videoAspect').value];
+    if (w !== undefined) {
+      document.getElementById('width').value = w;
+      document.getElementById('height').value = h;
+    }
+  }
+
   // 图像常用尺寸 preset 应用
   function applyImgSizePreset() {
-    const preset = document.getElementById('imgSizePreset').value;
-    const [w, h] = preset.split('x');
-    document.getElementById('imgWidth').value = w;
-    document.getElementById('imgHeight').value = h;
+    const map = {
+      '1:1':  [1024, 1024],
+      '3:4':  [768, 1024],
+      '4:3':  [1024, 768],
+      '9:16': [720, 1280],
+      '16:9': [1280, 720],
+      '9:21': [768, 1792],
+      '21:9': [1792, 768],
+      '2:3':  [683, 1024],
+      '3:2':  [1024, 683],
+      'custom': null,
+    };
+    const [w, h] = map[document.getElementById('imgSizePreset').value];
+    if (w !== undefined) {
+      document.getElementById('imgWidth').value = w;
+      document.getElementById('imgHeight').value = h;
+    }
   }
 
   // 生图二级页签切换逻辑
@@ -948,37 +1327,15 @@
   }
 
   // ── API Key persistence ───────────────────────────────────────────────
-  let saveTimeout = null;
-  async function saveApiKey() {
-    const val = document.getElementById('apiKeyInput').value.trim();
-    localStorage.setItem('agnes_api_key', val);
-
-    // 防抖发送，避免高频输入导致请求过多
-    if (saveTimeout) clearTimeout(saveTimeout);
-    saveTimeout = setTimeout(async () => {
-      try {
-        await fetch('/api/key', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ apiKey: val }),
-        });
-      } catch (err) {
-        console.error('保存 API Key 到服务器失败:', err);
-      }
-    }, 500);
-
-    const badge = document.getElementById('savedBadge');
-    badge.classList.add('show');
-    setTimeout(() => badge.classList.remove('show'), 1500);
-  }
-
   async function loadApiKey() {
     // 优先从后端获取保存的 API Key
     try {
       const res = await fetch('/api/key');
       const data = await res.json();
       if (data.apiKey) {
-        document.getElementById('apiKeyInput').value = data.apiKey;
+        cachedApiKey = data.apiKey;
+        const adminInput = document.getElementById('adminApiKey');
+        if (adminInput) adminInput.value = data.apiKey;
         return;
       }
     } catch (err) {
@@ -987,11 +1344,37 @@
 
     // 备用 fallback：从本地 localStorage 加载
     const saved = localStorage.getItem('agnes_api_key') || '';
-    document.getElementById('apiKeyInput').value = saved;
+    cachedApiKey = saved;
+    const adminInput = document.getElementById('adminApiKey');
+    if (adminInput) adminInput.value = saved;
+  }
+
+  // 管理页保存 API Key
+  async function saveAdminApiKey() {
+    const val = document.getElementById('adminApiKey').value.trim();
+    cachedApiKey = val;
+    localStorage.setItem('agnes_api_key', val);
+
+    try {
+      const res = await fetch('/api/key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey: val }),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      showAdminSuccess('✓ API Key 已保存');
+    } catch (err) {
+      showAdminError('保存失败: ' + err.message);
+    }
+  }
+
+  function toggleKeyVisibility() {
+    const input = document.getElementById('adminApiKey');
+    input.type = input.type === 'password' ? 'text' : 'password';
   }
 
   function getApiKey() {
-    return document.getElementById('apiKeyInput').value.trim();
+    return cachedApiKey;
   }
 
   // ── Mode tabs ─────────────────────────────────────────────────────────
@@ -1100,7 +1483,7 @@
     const negPrompt = document.getElementById('negativePrompt').value.trim();
 
     const body = {
-      model: MODEL,
+      model: getSelectedVideoModel(),
       prompt,
       width,
       height,
@@ -1172,7 +1555,7 @@
     } catch (err) {
       // API Key 无效直接失败
       if (isAuthError(err.message)) {
-        showError(`认证失败: ${err.message}。请检查 API Key 是否正确。`);
+        showError(`认证失败: ${err.message}。请在 ⚙️ 管理 页检查 API Key。`);
         btn.disabled = false;
         label.textContent = '生成视频';
         return;
@@ -1287,7 +1670,7 @@
     } catch (err) {
       // API Key 无效直接失败，不重试
       if (isAuthError(err.message)) {
-        showError(`认证失败: ${err.message}。请检查 API Key 是否正确。`);
+        showError(`认证失败: ${err.message}。请在 ⚙️ 管理 页检查 API Key。`);
         stopPolling();
         resetBtn();
         return;
@@ -1325,6 +1708,7 @@
   function showStatusCard(taskId, status, progress) {
     const card = document.getElementById('statusCard');
     card.classList.add('visible');
+    document.getElementById('resultPlaceholder').classList.add('hidden');
     document.getElementById('taskId').textContent = `Task ID: ${taskId}`;
     updateStatusCard(taskId, status, progress, {});
   }
@@ -1381,6 +1765,7 @@
     meta.innerHTML = `<span>${dur}</span> ${size} ${usage}`;
 
     card.classList.add('visible');
+    document.getElementById('resultPlaceholder').classList.add('hidden');
   }
 
   function hideResult() {
@@ -1432,7 +1817,7 @@
 
     const width = parseInt(document.getElementById('imgWidth').value) || 1024;
     const height = parseInt(document.getElementById('imgHeight').value) || 1024;
-    const model = document.getElementById('imgModel').value.trim() || 'agnes-image-2.1-flash';
+    const model = document.getElementById('imgModel').value || appConfig.imageModel || 'agnes-image-2.1-flash';
     const seedVal = document.getElementById('imgSeed').value.trim();
     const stepsVal = document.getElementById('imgInferenceSteps').value.trim();
     const negPrompt = document.getElementById('imgNegativePrompt').value.trim();
@@ -1498,15 +1883,38 @@
     const dlBtn = document.getElementById('imgDownloadBtn');
 
     img.src = url;
-    dlBtn.href = url;
-    
+    img.style.display = 'block';
+
     meta.innerHTML = `<span>尺寸: ${width}x${height}</span> · 格式: PNG`;
     card.classList.add('visible');
+    document.getElementById('resultPlaceholder').classList.add('hidden');
+
+    // 绑定下载按钮：通过代理 fetch 图片数据 → 创建 Blob → 触发本地保存
+    dlBtn.onclick = async () => {
+      try {
+        const proxyUrl = `${BASE_URL}/video-proxy?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxyUrl);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'agnes-image.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        showImgError('下载失败: ' + err.message);
+      }
+    };
   }
 
   function hideImgResult() {
     document.getElementById('imageResultCard').classList.remove('visible');
-    document.getElementById('imagePlayer').src = '';
+    const img = document.getElementById('imagePlayer');
+    img.src = '';
+    img.style.display = 'none';
   }
 
   function showImgError(msg) {
@@ -1646,6 +2054,448 @@
       }
     }
   });
+
+  // ════════════════════════════════════════════════════════════════════
+  // 以下是 v2 扩展：配置持久化、模型管理、聊天 SSE
+  // ════════════════════════════════════════════════════════════════════
+
+  // ── 配置加载 / 保存 ────────────────────────────────────────────────────
+  async function loadConfig() {
+    try {
+      const res = await fetch('/api/config');
+      const data = await res.json();
+      if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+        appConfig = Object.assign(appConfig, data);
+        if (!Array.isArray(appConfig.modelList) || appConfig.modelList.length === 0) {
+          appConfig.modelList = [...DEFAULT_MODELS];
+        }
+      }
+    } catch (err) {
+      console.warn('加载本地配置失败，使用默认:', err);
+    }
+  }
+
+  async function saveAdminConfig() {
+    // 从 UI 收集默认模型选择
+    appConfig.videoModel = document.getElementById('defaultVideoModel').value || appConfig.videoModel;
+    appConfig.imageModel = document.getElementById('defaultImageModel').value || appConfig.imageModel;
+    appConfig.chatModel  = document.getElementById('defaultChatModel').value  || appConfig.chatModel;
+
+    // modelList 由 renderModelTable 写入 appConfig（每次 input 变化都同步）
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appConfig),
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      showAdminSuccess('✓ 配置已保存');
+      refreshModelSelects();
+    } catch (err) {
+      showAdminError('保存配置失败: ' + err.message);
+    }
+  }
+
+  // ── 模型分类启发式 ────────────────────────────────────────────────────
+  function guessModelType(id) {
+    const lower = String(id).toLowerCase();
+    if (lower.includes('video')) return 'video';
+    if (lower.includes('image') || lower.includes('flash') || lower.includes('dall') || lower.includes('sd')) return 'image';
+    if (lower.includes('embed')) return 'other';
+    if (lower.includes('chat') || lower.includes('text') || lower.includes('gpt') || lower.includes('llama')
+        || lower.includes('claude') || lower.includes('qwen') || lower.includes('mistral') || lower.includes('gemini')
+        || lower.includes('deepseek') || lower.includes('agnes-1') || lower.includes('agnes-2') || lower.includes('agnes-3')) return 'chat';
+    return 'other';
+  }
+
+  // ── 从官方 API 拉取模型列表 ────────────────────────────────────────────
+  async function fetchModelsFromApi() {
+    if (!cachedApiKey) {
+      showAdminError('请先填写 API Key 并保存');
+      return;
+    }
+    const label = document.getElementById('fetchModelsLabel');
+    label.innerHTML = '<span class="spin">⟳</span> 拉取中…';
+
+    try {
+      const res = await fetch(`${BASE_URL}/v1/models`, {
+        headers: { 'X-Api-Key': cachedApiKey },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
+      }
+
+      const list = data.data || data.models || [];
+      if (!Array.isArray(list) || list.length === 0) {
+        throw new Error('返回的模型列表为空');
+      }
+
+      // 合并：保留已有的启用/类型设置
+      const existingMap = new Map(appConfig.modelList.map(m => [m.id, m]));
+      const merged = list.map(m => {
+        const id = m.id || m.name;
+        const existing = existingMap.get(id);
+        return {
+          id,
+          type: existing?.type || guessModelType(id),
+          enabled: existing?.enabled !== undefined ? existing.enabled : true,
+        };
+      });
+      appConfig.modelList = merged;
+      appConfig.modelListUpdatedAt = new Date().toISOString();
+      renderModelTable();
+      refreshModelSelects();
+      showAdminSuccess(`✓ 已拉取 ${merged.length} 个模型，请点击 "💾 保存配置" 持久化`);
+    } catch (err) {
+      showAdminError(`拉取失败: ${err.message}。可手动添加模型作为降级方案。`);
+    } finally {
+      label.textContent = '🔄 从官方拉取最新模型';
+    }
+  }
+
+  function resetModelsToDefault() {
+    appConfig.modelList = [...DEFAULT_MODELS];
+    renderModelTable();
+    refreshModelSelects();
+    showAdminSuccess('✓ 已重置为内置模型，请点击 "💾 保存配置" 持久化');
+  }
+
+  function addModelRow() {
+    appConfig.modelList.push({ id: '', type: 'chat', enabled: true });
+    renderModelTable();
+  }
+
+  function deleteModelRow(idx) {
+    appConfig.modelList.splice(idx, 1);
+    renderModelTable();
+    refreshModelSelects();
+  }
+
+  function renderModelTable() {
+    const tbody = document.getElementById('modelTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (!appConfig.modelList || appConfig.modelList.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px">暂无模型，点击上方按钮拉取或手动添加</td>';
+      tbody.appendChild(tr);
+      return;
+    }
+
+    appConfig.modelList.forEach((m, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" data-field="id" data-idx="${idx}" value="${escapeHtml(m.id || '')}" placeholder="模型 ID"></td>
+        <td>
+          <select data-field="type" data-idx="${idx}">
+            <option value="chat"  ${m.type === 'chat'  ? 'selected' : ''}>chat 文本</option>
+            <option value="image" ${m.type === 'image' ? 'selected' : ''}>image 图像</option>
+            <option value="video" ${m.type === 'video' ? 'selected' : ''}>video 视频</option>
+            <option value="other" ${m.type === 'other' ? 'selected' : ''}>other 其他</option>
+          </select>
+        </td>
+        <td style="text-align:center"><input type="checkbox" data-field="enabled" data-idx="${idx}" ${m.enabled ? 'checked' : ''}></td>
+        <td><button class="btn btn-icon" onclick="deleteModelRow(${idx})" title="删除">×</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // 监听编辑
+    tbody.querySelectorAll('[data-field]').forEach(el => {
+      el.addEventListener('change', onModelTableEdit);
+      if (el.tagName === 'INPUT' && el.type === 'text') {
+        el.addEventListener('input', onModelTableEdit);
+      }
+    });
+  }
+
+  function onModelTableEdit(e) {
+    const idx = parseInt(e.target.dataset.idx);
+    const field = e.target.dataset.field;
+    if (!appConfig.modelList[idx]) return;
+    if (field === 'enabled') {
+      appConfig.modelList[idx].enabled = e.target.checked;
+    } else {
+      appConfig.modelList[idx][field] = e.target.value;
+    }
+    // 类型/启用变化要刷新默认模型 select 候选
+    if (field !== 'id') refreshModelSelects();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ── 视频/图像/聊天 各处的模型 select 填充 ──────────────────────────────
+  function getEnabledModelsByType(type) {
+    return (appConfig.modelList || [])
+      .filter(m => m.enabled && m.type === type && m.id)
+      .map(m => m.id);
+  }
+
+  function fillSelect(selectEl, options, currentValue) {
+    if (!selectEl) return;
+    const prevValue = currentValue || selectEl.value;
+    selectEl.innerHTML = '';
+    if (options.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = '(无可用模型)';
+      selectEl.appendChild(opt);
+      return;
+    }
+    options.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      selectEl.appendChild(opt);
+    });
+    if (options.includes(prevValue)) selectEl.value = prevValue;
+  }
+
+  function refreshModelSelects() {
+    const videoModels = getEnabledModelsByType('video');
+    const imageModels = getEnabledModelsByType('image');
+    const chatModels  = getEnabledModelsByType('chat');
+
+    fillSelect(document.getElementById('videoModelSelect'), videoModels, appConfig.videoModel);
+    fillSelect(document.getElementById('imgModel'),         imageModels, appConfig.imageModel);
+    fillSelect(document.getElementById('chatModelSelect'),  chatModels,  appConfig.chatModel);
+
+    // 管理页的"默认模型" select：同样按类型过滤
+    fillSelect(document.getElementById('defaultVideoModel'), videoModels, appConfig.videoModel);
+    fillSelect(document.getElementById('defaultImageModel'), imageModels, appConfig.imageModel);
+    fillSelect(document.getElementById('defaultChatModel'),  chatModels,  appConfig.chatModel);
+  }
+
+  function getSelectedVideoModel() {
+    const sel = document.getElementById('videoModelSelect');
+    return (sel && sel.value) || appConfig.videoModel || 'agnes-video-v2.0';
+  }
+
+  // ── 管理页消息提示 ────────────────────────────────────────────────────
+  function showAdminError(msg) {
+    const el = document.getElementById('adminErrorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+    document.getElementById('adminSuccessMsg').classList.remove('visible');
+  }
+  function showAdminSuccess(msg) {
+    const el = document.getElementById('adminSuccessMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+    document.getElementById('adminErrorMsg').classList.remove('visible');
+    setTimeout(() => el.classList.remove('visible'), 3000);
+  }
+
+  // ════════════════════════════════════════════════════════════════════
+  // 聊天 SSE
+  // ════════════════════════════════════════════════════════════════════
+  let chatMessages = [];
+  let chatAbortController = null;
+  const CHAT_STORAGE_KEY = 'agnes_chat_history';
+
+  function loadChatHistory() {
+    try {
+      const raw = localStorage.getItem(CHAT_STORAGE_KEY);
+      if (raw) {
+        chatMessages = JSON.parse(raw);
+        renderChatMessages();
+      }
+    } catch (err) {
+      console.warn('恢复聊天历史失败:', err);
+      chatMessages = [];
+    }
+  }
+
+  function saveChatHistory() {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(chatMessages));
+    } catch (err) {
+      console.warn('保存聊天历史失败:', err);
+    }
+  }
+
+  function renderChatMessages() {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+    container.innerHTML = '';
+    if (chatMessages.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'chat-empty';
+      empty.textContent = '开始一次对话吧 · Ctrl+Enter 发送';
+      container.appendChild(empty);
+      return;
+    }
+    chatMessages.forEach(m => {
+      const b = document.createElement('div');
+      b.className = 'chat-bubble ' + (m.role === 'user' ? 'user' : 'assistant');
+      b.textContent = m.content;
+      container.appendChild(b);
+    });
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function clearChat() {
+    if (chatAbortController) {
+      try { chatAbortController.abort(); } catch {}
+    }
+    chatMessages = [];
+    saveChatHistory();
+    renderChatMessages();
+    clearChatError();
+  }
+
+  function handleChatKeydown(e) {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      sendChat();
+    }
+  }
+
+  async function sendChat() {
+    const key = getApiKey();
+    if (!key) { showChatError('请先在 ⚙️ 管理 页配置 API Key'); return; }
+
+    const model = document.getElementById('chatModelSelect').value;
+    if (!model) { showChatError('请先在 ⚙️ 管理 页添加并启用至少一个 chat 类型的模型'); return; }
+
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+
+    clearChatError();
+    input.value = '';
+
+    // 追加用户消息
+    chatMessages.push({ role: 'user', content: text });
+    renderChatMessages();
+
+    // 占位 assistant 气泡
+    const container = document.getElementById('chatMessages');
+    const assistantBubble = document.createElement('div');
+    assistantBubble.className = 'chat-bubble assistant streaming';
+    assistantBubble.textContent = '';
+    container.appendChild(assistantBubble);
+    container.scrollTop = container.scrollHeight;
+
+    const btn = document.getElementById('chatSendBtn');
+    const label = document.getElementById('chatSendLabel');
+    btn.disabled = true;
+    label.innerHTML = '<span class="spin">⟳</span> 生成中…';
+
+    chatAbortController = new AbortController();
+    let accumulated = '';
+
+    try {
+      const res = await fetch(`${BASE_URL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'X-Api-Key': key,
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify({
+          model,
+          messages: chatMessages,
+          stream: true,
+        }),
+        signal: chatAbortController.signal,
+      });
+
+      if (!res.ok) {
+        let errMsg = `HTTP ${res.status}`;
+        try {
+          const errData = await res.json();
+          errMsg = errData.error?.message || errData.message || errMsg;
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+
+      if (ct.includes('text/event-stream')) {
+        // 真正的 SSE 流
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          // 按 \n\n 分割事件块
+          const events = buffer.split(/\r?\n\r?\n/);
+          buffer = events.pop() || '';
+
+          for (const evt of events) {
+            const lines = evt.split(/\r?\n/);
+            for (const line of lines) {
+              if (!line.startsWith('data:')) continue;
+              const payload = line.slice(5).trim();
+              if (payload === '[DONE]') continue;
+              try {
+                const json = JSON.parse(payload);
+                const delta = json.choices?.[0]?.delta?.content || '';
+                if (delta) {
+                  accumulated += delta;
+                  assistantBubble.textContent = accumulated;
+                  container.scrollTop = container.scrollHeight;
+                }
+              } catch (e) {
+                // 忽略无法解析的事件
+              }
+            }
+          }
+        }
+      } else {
+        // 非流式（降级）：一次性返回 JSON
+        const data = await res.json();
+        accumulated = data.choices?.[0]?.message?.content || '(空响应)';
+        assistantBubble.textContent = accumulated;
+      }
+
+      assistantBubble.classList.remove('streaming');
+      if (accumulated) {
+        chatMessages.push({ role: 'assistant', content: accumulated });
+        saveChatHistory();
+      } else {
+        assistantBubble.remove();
+      }
+
+    } catch (err) {
+      assistantBubble.classList.remove('streaming');
+      if (err.name === 'AbortError') {
+        if (accumulated) {
+          chatMessages.push({ role: 'assistant', content: accumulated + ' [已中断]' });
+          saveChatHistory();
+        } else {
+          assistantBubble.remove();
+        }
+      } else {
+        assistantBubble.remove();
+        // 移除刚才追加的 user 消息？保留以便用户改写重发
+        showChatError(`聊天请求失败: ${err.message}`);
+      }
+    } finally {
+      chatAbortController = null;
+      btn.disabled = false;
+      label.textContent = '发送';
+    }
+  }
+
+  function showChatError(msg) {
+    const el = document.getElementById('chatErrorMsg');
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  function clearChatError() {
+    const el = document.getElementById('chatErrorMsg');
+    if (el) el.classList.remove('visible');
+  }
 </script>
 </body>
 </html>

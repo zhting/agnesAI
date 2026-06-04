@@ -48,6 +48,41 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 读取本地配置（默认模型、模型列表、启用状态等）
+  if (req.method === 'GET' && req.url === '/api/config') {
+    const configPath = path.join(__dirname, 'config.json');
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      try {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      } catch (e) {
+        console.warn('config.json 解析失败，使用空配置:', e.message);
+      }
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify(config));
+    return;
+  }
+
+  // 写入本地配置（整体覆盖）
+  if (req.method === 'POST' && req.url === '/api/config') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const configPath = path.join(__dirname, 'config.json');
+        fs.writeFileSync(configPath, JSON.stringify(data, null, 2), 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true }));
+      } catch (err) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    });
+    return;
+  }
+
   // 视频代理中转服务（解决国内 storage.googleapis.com 被墙无法加载视频的问题）
   if (req.method === 'GET' && req.url.startsWith('/video-proxy')) {
     try {
@@ -118,10 +153,25 @@ const server = http.createServer((req, res) => {
       const proxy = https.request(options, (upstream) => {
         console.log(`[${new Date().toLocaleTimeString()}] 上游接口响应状态码: ${upstream.statusCode}`);
 
+        const upstreamCT = (upstream.headers['content-type'] || '').toLowerCase();
+        const isStream = upstreamCT.includes('text/event-stream');
+
+        // 流式响应（SSE）：直接透传，不收集 body，否则前端无法增量收到 token
+        if (isStream && upstream.statusCode >= 200 && upstream.statusCode < 300) {
+          res.writeHead(upstream.statusCode, {
+            'Content-Type': upstream.headers['content-type'],
+            'Cache-Control': 'no-cache, no-transform',
+            'Connection': 'keep-alive',
+            'X-Accel-Buffering': 'no',
+          });
+          upstream.pipe(res);
+          return;
+        }
+
         let respBody = '';
         upstream.on('data', chunk => { respBody += chunk; });
         upstream.on('end', () => {
-          console.log(`[${new Date().toLocaleTimeString()}] 上游接口返回数据:`, respBody);
+          console.log(`[${new Date().toLocaleTimeString()}] 上游接口返回数据:`, respBody.slice(0, 500));
         });
 
         // 上游非 2xx 时，统一包装为 JSON 错误返回
