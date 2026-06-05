@@ -345,21 +345,39 @@ const server = http.createServer((req, res) => {
       }
 
       const parsedTarget = new URL(targetUrl);
+      
+      const proxyHeaders = {
+        'Host': parsedTarget.hostname,
+        'User-Agent': req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      };
+      if (req.headers['range']) {
+        proxyHeaders['Range'] = req.headers['range'];
+      }
+      if (req.headers['accept']) {
+        proxyHeaders['Accept'] = req.headers['accept'];
+      }
+
       const proxyReq = https.request({
         hostname: parsedTarget.hostname,
         port: 443,
         path: parsedTarget.pathname + parsedTarget.search,
         method: 'GET',
+        headers: proxyHeaders,
+        timeout: 20000 // 20秒超时限制
       }, (upstream) => {
         res.writeHead(upstream.statusCode, upstream.headers);
         upstream.pipe(res);
       });
 
+      proxyReq.on('timeout', () => {
+        proxyReq.destroy(new Error('Connection timeout to upstream storage'));
+      });
+
       proxyReq.on('error', (err) => {
-        console.error('视频中转失败:', err.message);
+        console.error(`视频中转失败 [URL: ${targetUrl}]:`, err.message);
         if (!res.headersSent) {
-          res.writeHead(502);
-          res.end('Failed to proxy video');
+          res.writeHead(502, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end(`Failed to proxy video: ${err.message}`);
         }
       });
 
