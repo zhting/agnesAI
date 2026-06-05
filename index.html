@@ -2451,13 +2451,15 @@ select option {
       fill.style.width = `0%`;
       fill.classList.remove('active');
     } else {
-      if (progress === null || progress === undefined || isNaN(progress)) {
+      // 只有在 progress 是有效的大于 0 的数字时，才使用真实进度，否则触发/保持平滑自动增长模拟
+      if (progress === null || progress === undefined || isNaN(progress) || progress === 0) {
         if (!fakeProgressInterval) {
           startFakeProgress();
         }
       } else {
         stopFakeProgress();
-        const pct = Math.round(progress);
+        // 兼容浮点数格式的百分比（例如将 0.35 转换为 35%）
+        const pct = Math.round(progress > 1 ? progress : progress * 100);
         document.getElementById('progressPct').textContent = `${pct}%`;
         fill.style.width = `${pct}%`;
         fill.classList.add('active');
