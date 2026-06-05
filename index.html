@@ -1,1179 +1,1751 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agnes Video V2.0</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #0d0d0f;
-      --surface: #18181b;
-      --surface2: #222226;
-      --border: #2e2e33;
-      --accent: #7c6fff;
-      --accent-hover: #9a8fff;
-      --text: #e4e4e7;
-      --text-muted: #71717a;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --radius: 10px;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 24px 16px 48px;
-    }
-
-    /* ─── Header ─── */
-    header {
-      max-width: 800px;
-      margin: 0 auto 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, #7c6fff, #b06fff);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-
-    .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
-    .logo span { font-size: 12px; color: var(--text-muted); }
-
-    /* ─── Main wrapper (split layout) ─── */
-    .main-wrapper {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      gap: 24px;
-      align-items: flex-start;
-    }
-
-    .main-left {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .main-right {
-      width: 420px;
-      flex-shrink: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      position: sticky;
-      top: 24px;
-      max-height: calc(100vh - 48px);
-      overflow-y: auto;
-    }
-
-    /* ─── Main card ─── */
-    .card {
-      margin-bottom: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-
-    /* ─── Mode tabs ─── */
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      padding: 12px 16px 0;
-      gap: 4px;
-      flex-wrap: wrap;
-    }
-
-    .tab {
-      padding: 8px 16px;
-      border-radius: 8px 8px 0 0;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      color: var(--text-muted);
-      background: transparent;
-      border: none;
-      transition: color .2s, background .2s;
-    }
-
-    .tab:hover { color: var(--text); background: var(--surface2); }
-
-    .tab.active {
-      color: var(--accent);
-      background: var(--surface2);
-      border-bottom: 2px solid var(--accent);
-    }
-
-    /* ─── Form body ─── */
-    .form-body { padding: 24px; }
-
-    .field { margin-bottom: 18px; }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    textarea, input[type="text"], input[type="number"], select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: var(--surface2);
-      color: var(--text);
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      transition: border-color .2s;
-    }
-
-    textarea { resize: vertical; min-height: 100px; }
-    textarea:focus, input[type="text"]:focus, input[type="number"]:focus, select:focus {
-      border-color: var(--accent);
-    }
-
-    /* ─── Image URL list ─── */
-    .image-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .image-row { display: flex; gap: 8px; align-items: center; }
-    .image-row input { flex: 1; }
-
-    /* ─── Advanced toggle ─── */
-    .advanced-toggle {
-      display: flex; align-items: center; gap: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      user-select: none;
-    }
-
-    .advanced-toggle:hover { color: var(--text); }
-
-    .chevron { transition: transform .2s; display: inline-block; }
-    .chevron.open { transform: rotate(90deg); }
-
-    .advanced-panel { display: none; }
-    .advanced-panel.open { display: block; }
-
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-    /* ─── Buttons ─── */
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 20px;
-      border-radius: var(--radius);
-      font-size: 14px; font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: opacity .2s, background .2s;
-    }
-
-    .btn:disabled { opacity: .4; cursor: not-allowed; }
-
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      width: 100%;
-      justify-content: center;
-      padding: 12px;
-      font-size: 15px;
-    }
-
-    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
-
-    .btn-ghost {
-      background: var(--surface2);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      font-size: 13px;
-    }
-
-    .btn-ghost:hover { color: var(--text); }
-
-    .btn-icon {
-      background: var(--surface2);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      padding: 6px 10px;
-      font-size: 16px;
-      border-radius: 8px;
-    }
-
-    .btn-icon:hover { color: var(--error); border-color: var(--error); }
-
-    /* ─── Status card ─── */
-    .status-card {
-      margin: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 24px;
-      display: none;
-    }
-
-    .status-card.visible { display: block; }
-
-    .status-header {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 16px;
-    }
-
-    .status-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 4px 12px;
-      border-radius: 20px;
-      font-size: 12px; font-weight: 600;
-      text-transform: uppercase; letter-spacing: .5px;
-    }
-
-    .badge-queued { background: rgba(245,158,11,.15); color: var(--warning); }
-    .badge-in_progress { background: rgba(124,111,255,.15); color: var(--accent); }
-    .badge-completed { background: rgba(34,197,94,.15); color: var(--success); }
-    .badge-failed { background: rgba(239,68,68,.15); color: var(--error); }
-
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
-    .dot.pulse { animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .3; }
-    }
-
-    .task-id {
-      font-size: 12px; color: var(--text-muted);
-      font-family: 'Courier New', monospace;
-    }
-
-    /* ─── Progress bar ─── */
-    .progress-wrap { margin-bottom: 12px; }
-
-    .progress-label {
-      display: flex; justify-content: space-between;
-      font-size: 12px; color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-
-    .progress-bar {
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent), #b06fff);
-      border-radius: 3px;
-      transition: width .5s ease;
-    }
-
-    /* ─── Result placeholder ─── */
-    .result-placeholder {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 24px;
-      text-align: center;
-    }
-
-    .result-placeholder.hidden { display: none; }
-
-    /* ─── Video result ─── */
-    .result-card {
-      margin: 0;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      display: none;
-    }
-
-    .result-card.visible { display: block; }
-
-    .result-card video {
-      width: 100%;
-      max-height: 480px;
-      display: block;
-      background: #000;
-    }
-
-    .result-footer {
-      padding: 16px 24px;
-      display: flex; justify-content: space-between; align-items: center;
-      flex-wrap: wrap; gap: 12px;
-    }
-
-    .result-meta { font-size: 13px; color: var(--text-muted); }
-    .result-meta span { color: var(--text); font-weight: 500; }
-
-    .btn-download {
-      background: var(--success);
-      color: #fff;
-      text-decoration: none;
-    }
-
-    .btn-download:hover { opacity: .85; }
-
-    /* ─── Error message ─── */
-    .error-msg {
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.3);
-      color: var(--error);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      font-size: 14px;
-      margin-top: 12px;
-      display: none;
-    }
-
-    .error-msg.visible { display: block; }
-
-    /* ─── 轮询重试提示 ─── */
-    .poll-retry-info {
-      margin-top: 12px;
-      padding: 10px 14px;
-      border-radius: var(--radius);
-      font-size: 13px;
-      display: none;
-    }
-
-    .poll-retry-info.visible { display: block; }
-
-    .poll-retry-info.warn {
-      background: rgba(245,158,11,.1);
-      border: 1px solid rgba(245,158,11,.3);
-      color: var(--warning);
-    }
-
-    .poll-retry-info.danger {
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.3);
-      color: var(--error);
-    }
-
-    .retry-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      font-weight: 600;
-    }
-
-    .retry-detail {
-      font-size: 12px;
-      opacity: 0.85;
-      word-break: break-all;
-    }
-
-    /* ─── Hint text ─── */
-    .hint { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
-
-    /* ─── Spinner ─── */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spin { display: inline-block; animation: spin .8s linear infinite; }
-
-    /* ─── Media Type Tabs 一级页签 ─── */
-    .media-tabs {
-      margin: -8px 0 24px;
-      display: flex;
-      background: rgba(24, 24, 27, 0.6);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      border-radius: 12px;
-      padding: 4px;
-      gap: 4px;
-      max-width: 800px;
-    }
-
-    .media-tab {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 14px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .media-tab:hover {
-      color: var(--text);
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .media-tab.active {
-      color: #fff;
-      background: linear-gradient(135deg, #7c6fff, #b06fff);
-      box-shadow: 0 4px 15px rgba(124, 111, 255, 0.3);
-    }
-
-    .image-preview-wrap {
-      width: 100%;
-      background: #121214;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 200px;
-      overflow: hidden;
-    }
-
-    .image-preview-wrap img {
-      max-width: 100%;
-      max-height: 600px;
-      object-fit: contain;
-    }
-
-    /* ─── 图片输入增强组件 ─── */
-    .image-row-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .image-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      position: relative;
-    }
-
-    .image-row input {
-      flex: 1;
-    }
-
-    .file-upload-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      padding: 10px 12px;
-      font-size: 14px;
-      border-radius: var(--radius);
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      transition: all 0.2s;
-      height: 38px;
-      user-select: none;
-    }
-
-    .file-upload-btn:hover {
-      background: var(--border);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .pic-preview {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      margin-top: 4px;
-    }
-
-    .pic-preview img {
-      width: 40px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 4px;
-      border: 1px solid var(--border);
-    }
-
-    .pic-preview-info {
-      font-size: 11px;
-      color: var(--text-muted);
-      flex: 1;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .pic-preview-del {
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 14px;
-      padding: 2px 6px;
-      user-select: none;
-    }
-
-    .pic-preview-del:hover {
-      color: var(--error);
-    }
-
-    /* ─── 聊天 Card ─── */
-    .chat-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .chat-header-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .chat-header-label {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin: 0;
-    }
-
-    .chat-model-select {
-      width: auto;
-      min-width: 220px;
-      padding: 6px 10px;
-      font-size: 13px;
-    }
-
-    .chat-messages {
-      min-height: 400px;
-      max-height: 60vh;
-      padding: 16px 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: #0f0f12;
-    }
-
-    .chat-empty {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 60px 0;
-    }
-
-    .chat-bubble {
-      max-width: 86%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.55;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-
-    .chat-bubble.user {
-      align-self: flex-end;
-      background: var(--accent);
-      color: #fff;
-      border-bottom-right-radius: 4px;
-    }
-
-    .chat-bubble.assistant {
-      align-self: flex-start;
-      background: var(--surface2);
-      color: var(--text);
-      border-bottom-left-radius: 4px;
-      border: 1px solid var(--border);
-    }
-
-    .chat-bubble.assistant.streaming::after {
-      content: '▍';
-      color: var(--accent);
-      animation: pulse 1s infinite;
-      margin-left: 2px;
-    }
-
-    .chat-input-area {
-      display: flex;
-      gap: 12px;
-      align-items: flex-end;
-      padding: 16px 20px;
-      border-top: 1px solid var(--border);
-    }
-
-    .chat-input-area textarea {
-      flex: 1;
-      min-height: 50px;
-      max-height: 180px;
-    }
-
-    /* ─── 管理 Card ─── */
-    .admin-section {
-      margin-bottom: 28px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .admin-section:last-of-type {
-      border-bottom: none;
-      margin-bottom: 16px;
-      padding-bottom: 0;
-    }
-
-    .admin-section-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-
-    .admin-section code {
-      font-family: 'Courier New', monospace;
-      background: var(--surface2);
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 12px;
-    }
-
-    .admin-success {
-      background: rgba(34,197,94,.1);
-      border: 1px solid rgba(34,197,94,.3);
-      color: var(--success);
-      border-radius: var(--radius);
-      padding: 12px 16px;
-      font-size: 14px;
-      margin-top: 12px;
-      display: none;
-    }
-
-    .admin-success.visible { display: block; }
-
-    .model-table-wrap {
-      max-height: 360px;
-      overflow-y: auto;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-    }
-
-    .model-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .model-table th {
-      text-align: left;
-      padding: 10px 12px;
-      background: var(--surface2);
-      color: var(--text-muted);
-      font-weight: 600;
-      font-size: 12px;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-    }
-
-    .model-table td {
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .model-table tr:last-child td { border-bottom: none; }
-
-    .model-table input[type="text"] {
-      width: 100%;
-      padding: 6px 10px;
-      font-size: 13px;
-    }
-
-    .model-table select {
-      padding: 6px 10px;
-      font-size: 13px;
-    }
-
-    .model-table input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-      accent-color: var(--accent);
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agnes AI Gateway · 控制台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  color-scheme: dark;
+  --font-ui: "Hanken Grotesk","Noto Sans SC",system-ui,sans-serif;
+  --font-mono: "JetBrains Mono","Noto Sans SC",ui-monospace,monospace;
+
+  --bg: oklch(0.158 0.008 285);
+  --rail: oklch(0.185 0.009 285);
+  --surface: oklch(0.205 0.009 285);
+  --surface-2: oklch(0.245 0.010 285);
+  --surface-3: oklch(0.290 0.012 285);
+  --border: oklch(0.320 0.013 285);
+  --border-soft: oklch(0.265 0.010 285);
+  --text: oklch(0.955 0.004 285);
+  --text-soft: oklch(0.745 0.010 285);
+  --text-muted: oklch(0.600 0.012 285);
+  --accent-h: 292;
+  --accent: oklch(0.66 0.17 var(--accent-h));
+  --accent-2: oklch(0.63 0.18 calc(var(--accent-h) + 32));
+  --accent-ink: oklch(0.82 0.12 var(--accent-h));
+  --accent-soft: oklch(0.34 0.085 var(--accent-h));
+  --accent-line: oklch(0.46 0.11 var(--accent-h));
+  --ring: oklch(0.66 0.17 var(--accent-h) / 0.32);
+  --success: oklch(0.74 0.15 150);
+  --warning: oklch(0.80 0.14 78);
+  --error: oklch(0.68 0.18 25);
+
+  --r-sm: 9px; --r: 12px; --r-lg: 16px; --r-xl: 20px;
+  --density: 1;
+  --shadow-md: 0 8px 30px oklch(0 0 0 / 0.34), 0 2px 8px oklch(0 0 0 / 0.28);
+  --shadow-lg: 0 24px 60px oklch(0 0 0 / 0.5), 0 8px 20px oklch(0 0 0 / 0.35);
+  --pop: 0 12px 40px oklch(0 0 0 / 0.45);
+}
+
+/* ── Tweaks Panel Styles ── */
+.twk-panel {
+  position: fixed; right: 16px; bottom: 16px; z-index: 2147483646; width: 280px;
+  max-height: calc(100vh - 32px); display: flex; flex-direction: column;
+  transform-origin: bottom right;
+  background: rgba(250,249,247,.78); color: #29261b;
+  -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%);
+  border: .5px solid rgba(255,255,255,.6); border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 12px 40px rgba(0,0,0,.18);
+  font: 11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif; overflow: hidden;
+}
+.twk-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 8px 10px 14px; cursor: move; user-select: none;
+}
+.twk-hd b { font-size: 12px; font-weight: 600; letter-spacing: .01em; }
+.twk-x {
+  appearance: none; border: 0; background: transparent; color: rgba(41,38,27,.55);
+  width: 22px; height: 22px; border-radius: 6px; cursor: default; font-size: 13px; line-height: 1;
+}
+.twk-x:hover { background: rgba(0,0,0,.06); color: #29261b; }
+.twk-body {
+  padding: 2px 14px 14px; display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; overflow-x: hidden; min-height: 0;
+  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,.15) transparent;
+}
+.twk-body::-webkit-scrollbar { width: 8px; }
+.twk-body::-webkit-scrollbar-track { background: transparent; margin: 2px; }
+.twk-body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,.15); border-radius: 4px;
+  border: 2px solid transparent; background-clip: content-box;
+}
+.twk-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,.25); border: 2px solid transparent; background-clip: content-box;
+}
+.twk-row { display: flex; flex-direction: column; gap: 5px; }
+.twk-row-h { flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+.twk-lbl { display: flex; justify-content: space-between; align-items: baseline; color: rgba(41,38,27,.72); }
+.twk-lbl > span:first-child { font-weight: 500; }
+.twk-val { color: rgba(41,38,27,.5); font-variant-numeric: tabular-nums; }
+.twk-sect {
+  font-size: 10px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+  color: rgba(41,38,27,.45); padding: 10px 0 0;
+}
+.twk-sect:first-child { padding-top: 0; }
+.twk-slider {
+  appearance: none; -webkit-appearance: none; width: 100%; height: 4px; margin: 6px 0;
+  border-radius: 999px; background: rgba(0,0,0,.12); outline: none;
+}
+.twk-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%; background: #fff;
+  border: .5px solid rgba(0,0,0,.12); box-shadow: 0 1px 3px rgba(0,0,0,.2); cursor: default;
+}
+.twk-slider::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #fff; border: .5px solid rgba(0,0,0,.12); box-shadow: 0 1px 3px rgba(0,0,0,.2); cursor: default;
+}
+.twk-seg { position: relative; display: flex; padding: 2px; border-radius: 8px; background: rgba(0,0,0,.06); user-select: none; }
+.twk-seg-thumb {
+  position: absolute; top: 2px; bottom: 2px; border-radius: 6px;
+  background: rgba(255,255,255,.9); box-shadow: 0 1px 2px rgba(0,0,0,.12);
+  transition: left .15s cubic-bezier(.3,.7,.4,1), width .15s;
+}
+.twk-seg.dragging .twk-seg-thumb { transition: none; }
+.twk-seg button {
+  appearance: none; position: relative; z-index: 1; flex: 1; border: 0;
+  background: transparent; color: inherit; font: inherit; font-weight: 500; min-height: 22px;
+  border-radius: 6px; cursor: default; padding: 4px 6px; line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.twk-chips { display: flex; gap: 6px; }
+.twk-chip {
+  position: relative; appearance: none; flex: 1; min-width: 0; height: 26px;
+  padding: 0; border: 0; border-radius: 6px; overflow: hidden; cursor: default;
+  box-shadow: 0 0 0 .5px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.06);
+  transition: transform .12s cubic-bezier(.3,.7,.4,1), box-shadow .12s;
+}
+.twk-chip:hover { transform: translateY(-1px); box-shadow: 0 0 0 .5px rgba(0,0,0,.18), 0 4px 10px rgba(0,0,0,.12); }
+.twk-chip[data-on="1"] { box-shadow: 0 0 0 1.5px rgba(0,0,0,.85), 0 2px 6px rgba(0,0,0,.15); }
+.twk-chip svg {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 13px; height: 13px;
+}
+
+/* ── Density layout overrides ── */
+.content-left { padding: calc(32px * var(--density, 1)) calc(28px * var(--density, 1)) 0 !important; }
+.content-right { padding: calc(22px * var(--density, 1)) calc(22px * var(--density, 1)) calc(40px * var(--density, 1)) !important; }
+.content-full { padding: calc(26px * var(--density, 1)) !important; }
+.field { margin-bottom: calc(18px * var(--density, 1)) !important; }
+input[type="text"], input[type="number"], input[type="password"], textarea, select {
+  padding: calc(11px * var(--density, 1)) calc(13px * var(--density, 1)) !important;
+}
+.btn {
+  padding: calc(10px * var(--density, 1)) calc(16px * var(--density, 1)) !important;
+}
+.btn-sm { padding: calc(7px * var(--density, 1)) calc(12px * var(--density, 1)) !important; }
+.btn-lg { padding: calc(14px * var(--density, 1)) calc(22px * var(--density, 1)) !important; }
+
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: oklch(0.965 0.004 285);
+  --rail: oklch(0.992 0.002 285);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.972 0.004 285);
+  --surface-3: oklch(0.945 0.006 285);
+  --border: oklch(0.905 0.006 285);
+  --border-soft: oklch(0.935 0.005 285);
+  --text: oklch(0.255 0.018 287);
+  --text-soft: oklch(0.455 0.018 287);
+  --text-muted: oklch(0.595 0.016 287);
+  --accent: oklch(0.56 0.20 var(--accent-h));
+  --accent-2: oklch(0.55 0.21 calc(var(--accent-h) + 32));
+  --accent-ink: oklch(0.50 0.20 var(--accent-h));
+  --accent-soft: oklch(0.955 0.035 var(--accent-h));
+  --accent-line: oklch(0.86 0.06 var(--accent-h));
+  --ring: oklch(0.56 0.20 var(--accent-h) / 0.28);
+  --shadow-md: 0 8px 28px oklch(0.3 0.02 285 / 0.10), 0 2px 6px oklch(0.3 0.02 285 / 0.06);
+  --shadow-lg: 0 24px 56px oklch(0.3 0.02 285 / 0.16), 0 8px 18px oklch(0.3 0.02 285 / 0.08);
+  --pop: 0 12px 36px oklch(0.3 0.02 285 / 0.16);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow: hidden;
+}
+::selection { background: var(--accent-soft); color: var(--text); }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+textarea, input, select { font-family: inherit; color-scheme: inherit; }
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
+/* 覆盖浏览器自动填充的白色背景 */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--surface-2) inset !important;
+  box-shadow: 0 0 0 1000px var(--surface-2) inset !important;
+  border: 1px solid var(--border) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ── Scrollbar ── */
+.scroll { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+.scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); background-clip: padding-box; }
+
+/* ── Animations ── */
+@keyframes fadeUp { from { transform: translateY(9px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -180% 0; } 100% { background-position: 180% 0; } }
+@keyframes blink { 0%,60% { opacity: 0.3; } 30% { opacity: 1; } }
+@keyframes pulseSoft { 0%,100% { opacity: 1; } 50% { opacity: 0.55; } }
+@keyframes scaleIn { from { transform: scale(0.98); } to { transform: scale(1); } }
+.fade-up { animation: fadeUp 0.4s cubic-bezier(0.2,0.7,0.2,1) both; }
+.scale-in { animation: scaleIn 0.45s cubic-bezier(0.2,0.7,0.2,1) both; }
+.shimmer {
+  background: linear-gradient(100deg, transparent 20%, oklch(1 0 0 / 0.06) 38%, oklch(1 0 0 / 0.12) 50%, oklch(1 0 0 / 0.06) 62%, transparent 80%);
+  background-size: 220% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* ── Layout Shell ── */
+.layout { display: flex; height: 100vh; overflow: hidden; }
+
+/* ── Nav Rail (left) ── */
+.nav-rail {
+  width: 96px; flex-shrink: 0; background: var(--rail);
+  border-right: 1px solid var(--border-soft);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 18px 0 14px; gap: 6px;
+}
+.nav-logo {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  display: grid; place-items: center; color: #fff; flex-shrink: 0;
+  box-shadow: 0 4px 14px var(--accent-soft);
+  margin-bottom: 14px;
+}
+.nav-logo svg { width: 25px; height: 25px; }
+.nav-items { display: flex; flex-direction: column; gap: 4px; width: 100%; align-items: center; }
+.nav-btn {
+  width: 68px; padding: 10px 0 8px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  color: var(--text-muted); position: relative; transition: all .15s;
+  font-size: 12px; font-weight: 500;
+}
+.nav-btn svg { width: 28px; height: 28px; }
+.nav-btn:hover { background: var(--surface-2); color: var(--text-soft); }
+.nav-btn.active {
+  color: var(--accent-ink); background: var(--accent-soft);
+}
+.nav-btn.active::before {
+  content: ''; position: absolute; left: -12px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 22px; border-radius: 99px; background: var(--accent);
+}
+.nav-key-btn {
+  width: 68px; padding: 10px 0; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  color: var(--text-muted);
+}
+.nav-key-btn svg { width: 26px; height: 26px; }
+.key-dot {
+  position: absolute; right: -3px; top: -2px;
+  width: 8px; height: 8px; border-radius: 99px;
+  border: 2px solid var(--rail);
+}
+.key-dot.ok { background: var(--success); }
+.key-dot.missing { background: var(--warning); }
+.nav-spacer { flex: 1; }
+
+/* ── Main Area ── */
+.main-area { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; }
+
+/* ── Top Bar ── */
+.topbar {
+  height: 64px; flex-shrink: 0;
+  border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; gap: 16px;
+  padding: 0 26px;
+  background: color-mix(in oklab, var(--bg) 70%, transparent);
+  backdrop-filter: blur(10px);
+}
+.topbar-title { flex: 1; min-width: 0; }
+.topbar-title h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.topbar-title .sub { font-size: 12.5px; color: var(--text-muted); margin-top: 1px; }
+.api-pill {
+  display: flex; align-items: center; gap: 7px; font-size: 12px; padding: 6px 12px;
+  border-radius: 99px; background: var(--surface); border: 1px solid var(--border-soft);
+}
+.api-pill .dot { width: 7px; height: 7px; border-radius: 99px; }
+.api-pill.ok .dot { background: var(--success); }
+.api-pill.ok { color: var(--success); }
+.api-pill.warn .dot { background: var(--warning); }
+.api-pill.warn { color: var(--warning); }
+.theme-toggle {
+  width: 64px; height: 34px; border-radius: 99px; border: 1px solid var(--border);
+  background: var(--surface-2); position: relative; display: flex; align-items: center;
+  padding: 3px; flex-shrink: 0; transition: background .2s;
+}
+.theme-toggle .thumb {
+  position: absolute; left: 3px; top: 3px;
+  width: 28px; height: 28px; border-radius: 99px;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  color: #fff; display: grid; place-items: center;
+  transition: left .22s cubic-bezier(0.2,0.7,0.2,1);
+  box-shadow: 0 2px 6px var(--accent-soft);
+}
+.theme-toggle.light .thumb { left: 33px; }
+.theme-toggle svg { width: 15px; height: 15px; }
+.theme-toggle .bg-icon { position: absolute; transition: opacity .2s; }
+.theme-toggle .bg-moon { left: 9px; color: var(--text-muted); opacity: 0; }
+.theme-toggle .bg-sun  { right: 9px; color: var(--warning); opacity: 1; }
+.theme-toggle.light .bg-moon { opacity: 1; }
+.theme-toggle.light .bg-sun  { opacity: 0; }
+
+/* ── Content Area ── */
+.content { flex: 1; min-width: 0; display: flex; overflow: hidden; }
+.content-left { flex: 1; overflow-y: auto; padding: 16px 28px 0; }
+.content-left::-webkit-scrollbar { width: 8px; }
+.content-left::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+.content-right {
+  width: 416px; flex-shrink: 0;
+  border-left: 1px solid var(--border-soft);
+  overflow-y: auto; padding: 22px 22px 40px;
+  background: color-mix(in oklab, var(--bg) 50%, var(--rail));
+}
+.content-right::-webkit-scrollbar { width: 8px; }
+.content-right::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+.content-full { flex: 1; overflow-y: auto; padding: 26px; }
+.content-full::-webkit-scrollbar { width: 8px; }
+.content-full::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; border: 3px solid transparent; background-clip: padding-box; }
+
+/* ── Studio Card ── */
+.studio-card {
+  background: var(--surface); border: 1px solid var(--border-soft);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-md);
+}
+
+/* ── Mode Tabs (secondary) ── */
+.mode-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 5px; background: var(--surface-2);
+  border-radius: 12px; border: 1px solid var(--border-soft);
+}
+.mode-tab-btn {
+  padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+  color: var(--text-soft); transition: color .15s;
+}
+.mode-tab-btn:hover { color: var(--text); }
+.mode-tab-btn.active {
+  color: #fff;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  box-shadow: 0 4px 12px var(--accent-soft);
+  font-weight: 600;
+}
+
+/* ── Field + Label ── */
+.field { margin-bottom: 18px; }
+.field > label {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12.5px; font-weight: 600; color: var(--text-soft); margin-bottom: 7px;
+}
+.field > label .req { color: var(--accent-ink); }
+.field-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+
+/* 统一所有表单元素配色，消除浏览器默认渲染差异 */
+input[type="text"], input[type="number"], input[type="password"], textarea, select {
+  width: 100%; padding: 11px 13px;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-sm);
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  font-size: 14px; outline: none;
+  transition: border-color .15s, box-shadow .15s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus,
+textarea:focus, select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--ring) !important;
+}
+textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+select {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  cursor: pointer; text-align: left;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 32px !important;
+}
+select.mono { font-family: var(--font-mono); font-size: 13px; }
+select option {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 16px; border-radius: var(--r-sm); font-size: 13.5px; font-weight: 600;
+  transition: filter .15s, background .15s, border-color .15s; white-space: nowrap;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary {
+  background: linear-gradient(140deg, var(--accent), var(--accent-2));
+  color: #fff; box-shadow: 0 6px 18px var(--accent-soft);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-solid { background: var(--surface-3); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost { background: transparent; color: var(--text-soft); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); }
+.btn-subtle { background: var(--surface-2); color: var(--text-soft); }
+.btn-danger { background: transparent; color: var(--error); border: 1px solid color-mix(in oklab, var(--error) 40%, var(--border)); }
+.btn-icon {
+  width: 40px; padding: 0; height: 42px; background: var(--surface-2);
+  color: var(--text-soft); border: 1px solid var(--border); border-radius: var(--r-sm);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-icon:hover { color: var(--text); }
+.btn-icon.danger:hover { color: var(--error); border-color: var(--error); }
+.btn-sm { padding: 7px 12px; font-size: 12px; }
+.btn-lg { padding: 14px 22px; font-size: 15px; }
+.btn-full { width: 100%; }
+.fixed-bottom-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg);
+  padding: 16px 0 calc(24px * var(--density, 1));
+  margin-top: 24px;
+  border-top: 1px solid var(--border-soft);
+  z-index: 10;
+}
+.fixed-top-bar {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  padding: calc(26px * var(--density, 1)) 0 12px;
+  margin-top: calc(-26px * var(--density, 1));
+  z-index: 9;
+}
+.btn-download {
+  background: var(--success); color: #fff; text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px; font-weight: 600;
+}
+.btn-download:hover { opacity: 0.85; }
+
+/* ── Advanced Toggle ── */
+.advanced-toggle {
+  display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600;
+  color: var(--text-soft); padding: 10px 0; width: 100%; cursor: pointer; user-select: none;
+}
+.advanced-toggle:hover { color: var(--text); }
+.advanced-toggle > svg { width: 18px; height: 18px; flex-shrink: 0; }
+.chevron { transition: transform .2s; display: inline-block; }
+.chevron.open { transform: rotate(90deg); }
+.chevron svg { width: 16px; height: 16px; }
+.chevron svg.chevron-icon { color: var(--text-muted); }
+.advanced-panel { display: none; }
+.advanced-panel.open { display: block; }
+
+/* ── Grid helpers ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+/* ── Mode hint ── */
+.mode-hint {
+  font-size: 12.5px; color: var(--text-muted); margin: 12px 2px 16px;
+  display: flex; align-items: center; gap: 7px;
+}
+.mode-hint svg { width: 14px; height: 14px; color: var(--accent-ink); }
+
+/* ── Prompt field wrapper ── */
+.prompt-field { position: relative; }
+.sample-btn {
+  position: absolute; left: 10px; bottom: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 600; color: var(--accent-ink);
+  padding: 4px 9px; border-radius: 7px; background: var(--accent-soft);
+}
+.sample-btn:hover { filter: brightness(1.1); }
+.sample-btn svg { width: 13px; height: 13px; }
+
+/* ── Image row ── */
+.image-row { display: flex; gap: 8px; align-items: center; }
+.image-row input { flex: 1; }
+.image-row-wrap { display: flex; flex-direction: column; gap: 10px; }
+.image-row input.dragging { border-style: dashed; border-color: var(--accent); }
+
+/* ── Pic preview ── */
+.pic-preview { display: flex; align-items: center; gap: 8px; padding: 6px 10px; font-size: 11px; }
+.pic-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border); }
+.pic-preview-info { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-muted); }
+.pic-preview-del { cursor: pointer; color: var(--text-muted); font-size: 14px; padding: 2px 6px; }
+.pic-preview-del:hover { color: var(--error); }
+
+/* ── Aspect Picker ── */
+.aspect-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+.aspect-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 10px 6px 8px; width: 62px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  transition: all .15s;
+}
+.aspect-btn:hover { background: var(--surface-3); }
+.aspect-btn.active {
+  border-color: var(--accent); background: var(--accent-soft);
+}
+.aspect-btn .box { height: 28px; display: grid; place-items: center; }
+.aspect-btn .box-inner { border-radius: 3px; }
+.aspect-btn .ratio-label { font-size: 11px; font-weight: 600; font-family: var(--font-mono); }
+
+/* ── Status badge ── */
+.status-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.status-dot { width: 8px; height: 8px; border-radius: 99px; }
+.status-dot.pulse { animation: pulseSoft 1.2s infinite; }
+
+/* ── Progress ── */
+.progress-wrap { margin-bottom: 12px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 7px; }
+.progress-bar { height: 8px; border-radius: 99px; background: rgba(0, 0, 0, 0.42); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .2s ease;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+}
+
+
+/* ── Error / Success messages ── */
+.error-msg {
+  background: color-mix(in oklab, var(--error) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--error) 35%, var(--border));
+  color: var(--error); border-radius: var(--r-sm);
+  padding: 12px 16px; font-size: 14px; margin-top: 12px; display: none;
+}
+.error-msg.visible { display: block; }
+.admin-success {
+  background: color-mix(in oklab, var(--success) 10%, transparent);
+  border: 1px solid color-mix(in oklab, var(--success) 35%, var(--border));
+  color: var(--success); border-radius: var(--r-sm);
+  padding: 12px 16px; font-size: 14px; margin-top: 12px; display: none;
+}
+.admin-success.visible { display: block; }
+
+/* ── Poll retry info ── */
+.poll-retry-info { margin-top: 12px; padding: 10px 14px; border-radius: var(--r-sm); font-size: 13px; display: none; }
+.poll-retry-info.visible { display: block; }
+.poll-retry-info.warn { background: color-mix(in oklab, var(--warning) 10%, transparent); border: 1px solid color-mix(in oklab, var(--warning) 35%, var(--border)); color: var(--warning); }
+.poll-retry-info.danger { background: color-mix(in oklab, var(--error) 10%, transparent); border: 1px solid color-mix(in oklab, var(--error) 35%, var(--border)); color: var(--error); }
+.retry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-weight: 600; }
+.retry-detail { font-size: 12px; opacity: 0.85; word-break: break-all; }
+
+/* ── Result cards ── */
+.result-placeholder {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 24px; text-align: center; border-style: dashed; border-width: 1px;
+}
+.result-placeholder .icon { width: 60px; height: 60px; border-radius: 16px; background: var(--surface-2); display: grid; place-items: center; color: var(--text-muted); margin-bottom: 16px; }
+.result-placeholder .title { font-size: 14px; font-weight: 600; color: var(--text-soft); margin-bottom: 6px; }
+.result-placeholder .desc { font-size: 12.5px; color: var(--text-muted); max-width: 220px; line-height: 1.55; }
+
+.result-card { padding: 14px; }
+.media-frame {
+  width: 100%; aspect-ratio: 16/9; max-height: 340px; border-radius: var(--r);
+  overflow: hidden; position: relative; border: 1px solid var(--border);
+  display: grid; place-items: center;
+}
+.media-frame .stripe { position: absolute; inset: 0; opacity: 0.5; background-image: repeating-linear-gradient(45deg, var(--border-soft) 0 1px, transparent 1px 11px); }
+.media-frame .shimmer-overlay { position: absolute; inset: 0; }
+.media-frame .play-btn {
+  width: 56px; height: 56px; border-radius: 99px;
+  background: rgba(255,255,255,0.16); backdrop-filter: blur(4px);
+  display: grid; place-items: center; color: #fff;
+  border: 1.5px solid rgba(255,255,255,0.4);
+}
+.media-frame .label {
+  position: absolute; left: 10px; bottom: 9px;
+  font-family: var(--font-mono); font-size: 10.5px;
+  color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.32);
+  padding: 2px 7px; border-radius: 6px;
+}
+.result-footer { display: flex; align-items: center; gap: 10px; margin-top: 13px; }
+.result-meta { flex: 1; font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted); }
+
+/* ── Chat ── */
+.chat-view { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.chat-header-bar {
+  height: 56px; flex-shrink: 0; border-bottom: 1px solid var(--border-soft);
+  display: flex; align-items: center; gap: 12px; padding: 0 18px;
+}
+.chat-header-label { font-size: 12.5px; color: var(--text-muted); font-weight: 600; }
+.chat-messages-area {
+  flex: 1; overflow-y: auto; padding: 22px 18px;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.chat-messages-area::-webkit-scrollbar { width: 6px; }
+.chat-messages-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+.chat-empty { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--text-muted); }
+.chat-bubble { border-radius: 14px; padding: 11px 15px; font-size: 14.5px; line-height: 1.6; white-space: pre-wrap; }
+.chat-bubble.user {
+  align-self: flex-end; max-width: 82%;
+  background: linear-gradient(140deg, var(--accent), var(--accent-2)); color: #fff;
+  border-radius: 14px 14px 4px 14px;
+}
+.chat-bubble.assistant {
+  align-self: flex-start; display: flex; gap: 12px;
+  font-size: 14.5px; line-height: 1.7; color: var(--text);
+}
+.chat-bubble.assistant .avatar { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; margin-top: 1px; }
+.chat-bubble.assistant .text { flex: 1; }
+.chat-bubble.assistant .stream-cursor { display: inline-block; width: 8px; height: 16px; background: var(--accent); vertical-align: text-bottom; margin-left: 2px; animation: blink 1s infinite; border-radius: 1; }
+.chat-input-bar {
+  flex-shrink: 0; border-top: 1px solid var(--border-soft); padding: 14px;
+}
+.chat-input-row { display: flex; gap: 10px; align-items: flex-end; }
+.chat-input-row textarea { min-height: 46px; max-height: 140px; resize: none; padding: 12px 14px; }
+
+/* ── Admin ── */
+.admin-section { padding: 20px 22px; }
+.admin-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.admin-section-header svg { width: 17px; height: 17px; color: var(--accent-ink); }
+.admin-section-header h3 { font-size: 15px; font-weight: 700; }
+.admin-section-desc { font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5; }
+.admin-row { display: flex; gap: 8px; align-items: center; }
+.admin-row input { font-family: var(--font-mono); }
+
+/* ── Model table ── */
+.model-table-wrap { max-height: 360px; overflow-y: auto; border: 1px solid var(--border-soft); border-radius: 12px; }
+.model-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.model-table th { text-align: left; padding: 10px 14px; background: var(--surface-2); color: var(--text-muted); font-weight: 600; font-size: 12px; border-bottom: 1px solid var(--border-soft); position: sticky; top: 0; }
+.model-table td { padding: 12px 14px; border-bottom: 1px solid var(--border-soft); }
+.model-table tr:last-child td { border-bottom: none; }
+.model-table tr:nth-child(even) { background: var(--surface-2); }
+.model-table input[type="text"] { padding: 6px 10px; font-size: 13px; }
+.model-table select { padding: 6px 10px; font-size: 13px; width: auto; }
+.model-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.model-badge { font-size: 11px; font-weight: 600; color: var(--accent-ink); background: var(--accent-soft); padding: 2px 9px; border-radius: 99px; }
+
+/* ── Toggle switch ── */
+.toggle { position: relative; width: 38px; height: 22px; border-radius: 99px; background: var(--surface-3); transition: background .15s; flex-shrink: 0; }
+.toggle.on { background: var(--accent); }
+.toggle .knob { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 99px; background: #fff; transition: left .18s; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.toggle.on .knob { left: 18px; }
+
+/* ── History strip ── */
+.history-label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; padding-left: 2px; }
+.history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.history-item { text-align: left; border-radius: 11px; overflow: hidden; border: 1px solid var(--border-soft); background: var(--surface); transition: border-color .15s; position: relative; }
+.history-item:hover { border-color: var(--accent-line); }
+.history-thumb { width: 100%; aspect-ratio: 16/10; position: relative; }
+.history-thumb .kind-icon { position: absolute; top: 6px; left: 6px; }
+.history-thumb .ar-tag { position: absolute; bottom: 6px; right: 6px; font-family: var(--font-mono); font-size: 9.5px; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.3); padding: 1px 5px; border-radius: 5px; }
+.history-thumb svg { width: 14px; height: 14px; color: rgba(255,255,255,0.9); }
+.history-item .history-title { padding: 7px 9px; font-size: 11.5px; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.history-del-btn {
+  position: absolute; top: 6px; right: 6px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45); color: rgba(255, 255, 255, 0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; line-height: 1; border: none; cursor: pointer;
+  opacity: 0; transition: opacity 0.2s, background 0.2s, color 0.2s;
+  z-index: 5; padding: 0;
+}
+.history-item:hover .history-del-btn { opacity: 1; }
+.history-del-btn:hover { background: var(--error); color: #fff; }
+
+#statusCard, #resultCard, #imageResultCard {
+  display: none;
+}
+#statusCard.visible, #resultCard.visible, #imageResultCard.visible {
+  display: block !important;
+}
+.result-placeholder.hidden {
+  display: none !important;
+}
+
+/* ── Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner { display: inline-block; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 99px; width: 16px; height: 16px; animation: spin .7s linear infinite; }
+.spinner-sm { border-width: 1.5px; width: 12px; height: 12px; }
+
+/* ── Hide when in chat/admin sections ── */
+.content-right[data-hidden="true"] { display: none; }
+
+/* ── Global Toast Notification ── */
+.toast-container {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  min-width: 280px;
+  max-width: 400px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  padding: 12px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  color: var(--text);
+  font-size: 13.5px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  transform: translateY(-20px);
+  opacity: 0;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+}
+.toast.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+.toast-success {
+  border-color: color-mix(in oklab, var(--success) 35%, var(--border-soft));
+  background: color-mix(in oklab, var(--success) 8%, var(--surface-2));
+  color: var(--success);
+}
+.toast-error {
+  border-color: color-mix(in oklab, var(--error) 35%, var(--border-soft));
+  background: color-mix(in oklab, var(--error) 8%, var(--surface-2));
+  color: var(--error);
+}
+</style>
 </head>
 <body>
 
-<!-- Header -->
-<header>
-  <div class="logo">
-    <div class="logo-icon">✨</div>
-    <div>
-      <h1>Agnes AI Gateway</h1>
-      <span>多媒体生成 · 自由 AI 接口</span>
-    </div>
+<!-- ═══ Layout Shell ═══ -->
+<div class="layout">
+
+<!-- ── Nav Rail ── -->
+<nav class="nav-rail">
+  <div class="nav-logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3.2c.55 4.1 1.85 5.4 5.95 5.95-4.1.55-5.4 1.85-5.95 5.95-.55-4.1-1.85-5.4-5.95-5.95C10.15 8.6 11.45 7.3 12 3.2ZM18.7 14.2c.3 2 .9 2.6 2.9 2.9-2 .3-2.6.9-2.9 2.9-.3-2-.9-2.6-2.9-2.9 2-.3 2.6-.9 2.9-2.9Z"/>
+    </svg>
   </div>
-</header>
-
-<!-- 一级媒体选择页签 -->
-<div class="main-wrapper">
-  <div class="main-left">
-
-<div class="media-tabs">
-  <button class="media-tab active" id="tabVideo" onclick="switchMediaType('video')">🎬 视频生成</button>
-  <button class="media-tab" id="tabImage" onclick="switchMediaType('image')">🎨 图像生成</button>
-  <button class="media-tab" id="tabChat" onclick="switchMediaType('chat')">💬 聊天</button>
-  <button class="media-tab" id="tabAdmin" onclick="switchMediaType('admin')">⚙️ 管理</button>
-</div>
-
-<!-- Generation Card - Video -->
-<div class="card" id="videoCard">
-  <!-- Mode tabs -->
-  <div class="tabs">
-    <button class="tab active" data-mode="text">文本生成视频</button>
-    <button class="tab" data-mode="image">图片生成视频</button>
-    <button class="tab" data-mode="multi">多图视频</button>
-    <button class="tab" data-mode="keyframe">关键帧动画</button>
-  </div>
-
-  <div class="form-body">
-
-    <!-- Prompt -->
-    <div class="field">
-      <label>提示词 (Prompt) <span style="color:var(--error)">*</span></label>
-      <textarea id="prompt" placeholder="描述视频内容、动作、场景、摄像机运动、光线和风格…&#10;例如：A young astronaut walking across a red desert planet, dust blowing in the wind, slow cinematic tracking shot, dramatic sunset lighting, realistic sci-fi style"></textarea>
-    </div>
-
-    <!-- Single image URL (image-to-video mode) -->
-    <div class="field" id="singleImageField" style="display:none">
-      <label>参考图片 URL</label>
-      <div class="image-row-wrap">
-        <div class="image-row">
-          <input type="text" id="singleImage" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
-          <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
-            📁
-            <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
-          </label>
-        </div>
-        <div class="pic-preview" style="display:none"></div>
-      </div>
-      <div class="hint">支持公网图片链接，或选择/粘贴本地图片（将转为 Base64）</div>
-    </div>
-
-    <!-- Multi-image URL list (multi / keyframe modes) -->
-    <div class="field" id="multiImageField" style="display:none">
-      <label>参考图片列表</label>
-      <div class="image-list" id="imageList">
-        <div class="image-row-wrap">
-          <div class="image-row">
-            <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
-            <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
-              📁
-              <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
-            </label>
-            <button class="btn btn-icon" onclick="removeImageRow(this)" title="删除">×</button>
-          </div>
-          <div class="pic-preview" style="display:none"></div>
-        </div>
-        <div class="image-row-wrap">
-          <div class="image-row">
-            <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
-            <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
-              📁
-              <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
-            </label>
-            <button class="btn btn-icon" onclick="removeImageRow(this)" title="删除">×</button>
-          </div>
-          <div class="pic-preview" style="display:none"></div>
-        </div>
-      </div>
-      <button class="btn btn-ghost" style="margin-top:8px" onclick="addImageRow()">+ 添加图片</button>
-      <div class="hint" id="multiHint"></div>
-    </div>
-
-    <!-- Advanced options toggle -->
-    <div class="advanced-toggle" onclick="toggleAdvanced()">
-      <span class="chevron open" id="chevron">▶</span>
-      高级参数
-    </div>
-
-    <div class="advanced-panel open" id="advancedPanel">
-      <div class="field" style="margin-bottom:16px">
-        <label>画面比例 (Aspect Ratio)</label>
-        <select id="videoAspect" onchange="applyVideoAspect()">
-          <option value="16:9" selected>16:9 横屏</option>
-          <option value="9:16">9:16 竖屏</option>
-          <option value="1:1">1:1 正方形</option>
-          <option value="4:3">4:3 横图</option>
-          <option value="3:4">3:4 竖图</option>
-          <option value="custom">自定义</option>
-        </select>
-      </div>
-
-      <div class="field" style="margin-bottom:16px">
-        <label>视频模型 (Model)</label>
-        <select id="videoModelSelect"></select>
-        <div class="hint">默认值在 ⚙️ 管理 页设置。若列表为空，请先在管理页配置模型。</div>
-      </div>
-
-      <div class="grid-3" style="margin-bottom:16px">
-        <div class="field" style="margin:0">
-          <label>宽度 (Width)</label>
-          <select id="width">
-            <option value="1152" selected>1152</option>
-            <option value="768">768</option>
-            <option value="720">720</option>
-            <option value="1024">1024</option>
-            <option value="1280">1280</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>高度 (Height)</label>
-          <select id="height">
-            <option value="768" selected>768</option>
-            <option value="512">512</option>
-            <option value="720">720</option>
-            <option value="1024">1024</option>
-            <option value="1280">1280</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>帧率 (FPS)</label>
-          <select id="frameRate">
-            <option value="24" selected>24</option>
-            <option value="30">30</option>
-            <option value="15">15</option>
-            <option value="60">60</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-bottom:16px">
-        <div class="field" style="margin:0">
-          <label>帧数 (num_frames)</label>
-          <select id="numFrames">
-            <option value="81">81 (~3.4s @ 24fps)</option>
-            <option value="121" selected>121 (~5s @ 24fps)</option>
-            <option value="161">161 (~6.7s @ 24fps)</option>
-            <option value="241">241 (~10s @ 24fps)</option>
-            <option value="441">441 (~18s @ 24fps)</option>
-          </select>
-          <div class="hint">必须满足 8n+1 格式</div>
-        </div>
-        <div class="field" style="margin:0">
-          <label>随机种子 (Seed)</label>
-          <input type="number" id="seed" placeholder="留空则随机" min="0">
-        </div>
-      </div>
-
-      <div class="field" style="margin-bottom:16px">
-        <label>推理步数 (num_inference_steps)</label>
-        <input type="number" id="inferenceSteps" placeholder="默认由模型决定" min="1" max="100">
-      </div>
-
-      <div class="field" style="margin:0">
-        <label>负向提示词 (Negative Prompt)</label>
-        <textarea id="negativePrompt" placeholder="描述不希望出现的内容，例如：blurry, distorted, low quality, watermark" style="min-height:70px"></textarea>
-      </div>
-    </div>
-
-    <!-- Submit -->
-    <div style="margin-top:20px">
-      <button class="btn btn-primary" id="generateBtn" onclick="generate()">
-        <span id="generateLabel">生成视频</span>
-      </button>
-    </div>
-
-    <div class="error-msg" id="errorMsg"></div>
-  </div>
-</div>
-
-<!-- Generation Card - Image -->
-<div class="card" id="imageCard" style="display:none">
-  <!-- 生图模式二级页签 -->
-  <div class="tabs">
-    <button class="tab active img-mode-tab" data-imgmode="txt2img" onclick="switchImgMode('txt2img')">文本生成图像</button>
-    <button class="tab img-mode-tab" data-imgmode="img2img" onclick="switchImgMode('img2img')">图像生成图像</button>
-    <button class="tab img-mode-tab" data-imgmode="composition" onclick="switchImgMode('composition')">结构/构图保留</button>
-    <button class="tab img-mode-tab" data-imgmode="high_density" onclick="switchImgMode('high_density')">高信息密度优化</button>
-  </div>
-
-  <div class="form-body">
-    <!-- 参考图 URL (图生图及其他模式下显示) -->
-    <div class="field" id="imgRefField" style="display:none">
-      <label>参考图片 URL <span style="color:var(--error)">*</span></label>
-      <div class="image-row-wrap">
-        <div class="image-row">
-          <input type="text" id="imgRefUrl" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
-          <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
-            📁
-            <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
-          </label>
-        </div>
-        <div class="pic-preview" style="display:none"></div>
-      </div>
-      <div class="hint" id="imgRefHint">提供引导图像生成的参考图链接，或选择/粘贴本地图片</div>
-    </div>
-
-    <!-- Prompt -->
-    <div class="field">
-      <label>提示词 (Prompt) <span style="color:var(--error)">*</span></label>
-      <textarea id="imgPrompt" placeholder="描述图像内容、主体、动作、场景、光线和艺术风格…&#10;例如：A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k resolution"></textarea>
-    </div>
-
-    <!-- Advanced options toggle -->
-    <div class="advanced-toggle" onclick="toggleImgAdvanced()">
-      <span class="chevron open" id="imgChevron">▶</span>
-      高级参数
-    </div>
-
-    <div class="advanced-panel open" id="imgAdvancedPanel">
-      <div class="grid-3" style="margin-bottom:16px">
-        <div class="field" style="margin:0">
-          <label>常用尺寸 (Size Preset)</label>
-          <select id="imgSizePreset" onchange="applyImgSizePreset()">
-            <option value="1:1" selected>1:1 正方形 (1024x1024)</option>
-            <option value="3:4">3:4 竖图 (768x1024)</option>
-            <option value="4:3">4:3 横图 (1024x768)</option>
-            <option value="9:16">9:16 竖屏 (720x1280)</option>
-            <option value="16:9">16:9 横屏 (1280x720)</option>
-            <option value="9:21">9:21 竖屏 FHD (768x1792)</option>
-            <option value="21:9">21:9 横屏 FHD (1792x768)</option>
-            <option value="2:3">2:3 竖图 (683x1024)</option>
-            <option value="3:2">3:2 横图 (1024x683)</option>
-            <option value="custom">自定义</option>
-          </select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>自定义宽度 (Width)</label>
-          <input type="number" id="imgWidth" value="1024" min="256" max="2048" step="64">
-        </div>
-        <div class="field" style="margin:0">
-          <label>自定义高度 (Height)</label>
-          <input type="number" id="imgHeight" value="1024" min="256" max="2048" step="64">
-        </div>
-      </div>
-
-      <div class="grid-2" style="margin-bottom:16px">
-        <div class="field" style="margin:0">
-          <label>生图模型 (Model)</label>
-          <select id="imgModel"></select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>随机种子 (Seed)</label>
-          <input type="number" id="imgSeed" placeholder="留空则随机" min="0">
-        </div>
-      </div>
-
-      <div class="field" style="margin-bottom:16px">
-        <label>推理步数 (num_inference_steps)</label>
-        <input type="number" id="imgInferenceSteps" placeholder="默认由模型决定" min="1" max="100">
-      </div>
-
-      <div class="field" style="margin:0">
-        <label>负向提示词 (Negative Prompt)</label>
-        <textarea id="imgNegativePrompt" placeholder="描述不希望出现的内容，例如：blurry, distorted, low quality, watermark" style="min-height:70px"></textarea>
-      </div>
-    </div>
-
-    <!-- Submit -->
-    <div style="margin-top:20px">
-      <button class="btn btn-primary" id="generateImgBtn" onclick="generateImage()">
-        <span id="generateImgLabel">生成图像</span>
-      </button>
-    </div>
-
-    <div class="error-msg" id="imgErrorMsg"></div>
-  </div>
-</div>
-
-<!-- Generation Card - Chat -->
-<div class="card" id="chatCard" style="display:none">
-  <div class="chat-header">
-    <div class="chat-header-left">
-      <label class="chat-header-label">模型：</label>
-      <select id="chatModelSelect" class="chat-model-select"></select>
-    </div>
-    <button class="btn btn-ghost" onclick="clearChat()">🗑 清空对话</button>
-  </div>
-
-  <div class="chat-messages" id="chatMessages">
-    <div class="chat-empty">开始一次对话吧 · Ctrl+Enter 发送</div>
-  </div>
-
-  <div class="chat-input-area">
-    <textarea id="chatInput" placeholder="输入消息… (Ctrl+Enter 发送)" rows="3" onkeydown="handleChatKeydown(event)"></textarea>
-    <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()" style="width:auto; padding:10px 24px">
-      <span id="chatSendLabel">发送</span>
+  <div class="nav-items">
+    <button class="nav-btn active" id="navImage" onclick="switchMediaType('image')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.2a2 2 0 0 1 2.7 0L20 20.5"/></svg>
+      <span>图像</span>
+    </button>
+    <button class="nav-btn" id="navChat" onclick="switchMediaType('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11.5a8 8 0 0 1-11.5 7.2L4 20l1.3-4.4A8 8 0 1 1 20 11.5Z"/></svg>
+      <span>聊天</span>
+    </button>
+    <button class="nav-btn" id="navVideo" onclick="switchMediaType('video')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg>
+      <span>视频</span>
     </button>
   </div>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn" id="navTweaks" onclick="toggleTweaksPanel()" title="界面微调" style="margin-bottom: 8px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2.6v2.2M12 19.2v2.2M21.4 12h-2.2M4.8 12H2.6M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5M18.6 18.6l-1.5-1.5M6.9 6.9 5.4 5.4"/></svg>
+    <span>微调</span>
+  </button>
+  <button class="nav-btn" id="navAdmin" onclick="switchMediaType('admin')" style="margin-bottom: 4px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>管理</span>
+  </button>
+</nav>
 
-  <div class="error-msg" id="chatErrorMsg" style="margin:0 24px 16px"></div>
+<!-- ── Main ── -->
+<div class="main-area">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-title">
+      <!-- 页签切换，当处于视频/图像时显示，其它时候隐藏 -->
+      <div id="topbarTabsContainer" style="display: flex; align-items: center; gap: 12px;">
+        <!-- 视频页签 -->
+        <div class="mode-tabs" id="modeTabs" style="display: none;">
+          <button class="mode-tab-btn tab active" data-mode="text">文本生视频</button>
+          <button class="mode-tab-btn tab" data-mode="image">图片生视频</button>
+          <button class="mode-tab-btn tab" data-mode="multi">多图视频</button>
+          <button class="mode-tab-btn tab" data-mode="keyframe">关键帧动画</button>
+        </div>
+        <!-- 图像页签 -->
+        <div class="mode-tabs" id="imgModeTabs" style="display: flex;">
+          <button class="mode-tab-btn tab active img-mode-tab" data-imgmode="txt2img" onclick="switchMediaType('image');switchImgMode('txt2img')">文本生图</button>
+          <button class="mode-tab-btn tab img-mode-tab" data-imgmode="img2img" onclick="switchImgMode('img2img')">图生图</button>
+          <button class="mode-tab-btn tab img-mode-tab" data-imgmode="composition" onclick="switchImgMode('composition')">构图保留</button>
+          <button class="mode-tab-btn tab img-mode-tab" data-imgmode="high_density" onclick="switchImgMode('high_density')">高密度优化</button>
+        </div>
+      </div>
+      <!-- 文字标题，当处于聊天/管理时显示 -->
+      <div id="topbarTextTitle" style="display: none;">
+        <h1 id="topbarTitle">视频生成</h1>
+        <div class="sub" id="topbarSub">agnes-video-v2.0 · 文 / 图 / 多图 / 关键帧 → 视频</div>
+      </div>
+    </div>
+    <div class="api-pill ok" id="apiPill">
+      <span class="dot"></span>
+      <span id="apiPillText">API 就绪</span>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="切换主题" onclick="toggleTheme()">
+      <span class="thumb" id="themeThumb">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" id="themeIcon"><path d="M20 13.5A8 8 0 1 1 10.5 4a6.3 6.3 0 0 0 9.5 9.5Z"/></svg>
+      </span>
+      <!-- 背景图标：月亮（左侧，亮色时可见） -->
+      <span class="bg-icon bg-moon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13.5A8 8 0 1 1 10.5 4a6.3 6.3 0 0 0 9.5 9.5Z"/></svg></span>
+      <!-- 背景图标：太阳（右侧，暗色时可见） -->
+      <span class="bg-icon bg-sun"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.4M12 19.1v2.4M21.5 12h-2.4M4.9 12H2.5M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/></svg></span>
+    </button>
+  </header>
+
+  <!-- Content -->
+  <div class="content" id="contentArea">
+
+    <!-- ═══ Video Section ═══ -->
+    <div class="content-left" id="videoCard" style="display:none">
+      <div style="max-width:640px">
+
+        <!-- Prompt -->
+        <div class="field prompt-field">
+          <label>提示词 · Prompt <span class="req">*</span></label>
+          <textarea id="prompt" placeholder="描述视频内容、动作、场景、镜头运动、光线与风格…&#10;例如：A young astronaut walking across a red desert planet, dust blowing in the wind, slow cinematic tracking shot, dramatic sunset lighting, realistic sci-fi style" style="padding-bottom:38px"></textarea>
+          <button class="sample-btn" onclick="document.getElementById('prompt').value='A young astronaut walking across a red desert planet, dust blowing in the wind, slow cinematic tracking shot, dramatic sunset lighting, realistic sci-fi style'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5 4 17l3 3L17.5 9.5z"/><path d="m13 8 3 3M18 3l.6 1.8L20.4 5.4l-1.8.6L18 7.8l-.6-1.8L15.6 5.4l1.8-.6zM6 4l.4 1.2L7.6 5.6l-1.2.4L6 7.2l-.4-1.2L4.4 5.6l1.2-.4z"/></svg> 示例
+          </button>
+        </div>
+
+        <!-- Single image (image-to-video) -->
+        <div class="field" id="singleImageField" style="display:none">
+          <label>参考图片</label>
+          <div class="image-row-wrap">
+            <div class="image-row">
+              <input type="text" id="singleImage" placeholder="参考图片 · 链接 / 粘贴 / 拖入" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+              <label class="btn btn-subtle file-upload-btn" style="width:40px;padding:0;height:42px;font-size:18px" title="选择本地图片">
+                📁
+                <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+              </label>
+            </div>
+            <div class="pic-preview" style="display:none"></div>
+          </div>
+          <div class="field-hint">支持公网链接，或选择 / 粘贴 / 拖入本地图片（转 Base64）</div>
+        </div>
+
+        <!-- Multi-image (multi / keyframe) -->
+        <div class="field" id="multiImageField" style="display:none">
+          <label>参考图片列表</label>
+          <div class="image-list" id="imageList">
+            <div class="image-row-wrap">
+              <div class="image-row">
+                <input type="text" placeholder="参考图 1 · 链接 / 粘贴 / 拖入" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+                <label class="btn btn-subtle file-upload-btn" style="width:40px;padding:0;height:42px;font-size:18px" title="选择本地图片">
+                  📁
+                  <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+                </label>
+              </div>
+              <div class="pic-preview" style="display:none"></div>
+            </div>
+            <div class="image-row-wrap">
+              <div class="image-row">
+                <input type="text" placeholder="参考图 2 · 链接 / 粘贴 / 拖入" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+                <label class="btn btn-subtle file-upload-btn" style="width:40px;padding:0;height:42px;font-size:18px" title="选择本地图片">
+                  📁
+                  <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+                </label>
+                <button class="btn-icon danger" onclick="removeImageRow(this)" title="删除"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+              </div>
+              <div class="pic-preview" style="display:none"></div>
+            </div>
+          </div>
+          <button class="btn btn-subtle btn-sm" onclick="addImageRow()" style="margin-top:10px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg> 添加图片</button>
+          <div class="field-hint" id="multiHint"></div>
+        </div>
+
+        <div id="advancedPanel">
+          <div class="field">
+            <label>画面比例 · Aspect Ratio</label>
+            <div class="aspect-picker" id="videoAspectPicker">
+              <select id="videoAspect" onchange="applyVideoAspect()">
+                <option value="16:9" selected>16:9 横屏</option>
+                <option value="9:16">9:16 竖屏</option>
+                <option value="1:1">1:1 正方形</option>
+                <option value="4:3">4:3 横图</option>
+                <option value="3:4">3:4 竖图</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>视频模型 · Model</label>
+            <select id="videoModelSelect" class="mono"></select>
+            <div class="field-hint">默认值在 ⚙️ 管理 页设置。若列表为空，请先在管理页配置模型。</div>
+          </div>
+          <div class="grid-3">
+            <div class="field" style="margin:0"><label>宽度</label><select id="width" class="mono"><option value="1152" selected>1152</option><option value="768">768</option><option value="720">720</option><option value="1024">1024</option><option value="1280">1280</option></select></div>
+            <div class="field" style="margin:0"><label>高度</label><select id="height" class="mono"><option value="768" selected>768</option><option value="512">512</option><option value="720">720</option><option value="1024">1024</option><option value="1280">1280</option></select></div>
+            <div class="field" style="margin:0"><label>帧率 · FPS</label><select id="frameRate" class="mono"><option value="24" selected>24</option><option value="30">30</option><option value="15">15</option><option value="60">60</option></select></div>
+          </div>
+          <div class="grid-2">
+            <div class="field" style="margin:0">
+              <label>帧数 · num_frames</label>
+              <select id="numFrames"><option value="81">81 帧 · ~3.4s</option><option value="121" selected>121 帧 · ~5s</option><option value="161">161 帧 · ~6.7s</option><option value="241">241 帧 · ~10s</option><option value="441">441 帧 · ~18s</option></select>
+              <div class="field-hint" style="margin-top:4px">须满足 8n+1，≤ 441</div>
+            </div>
+            <div class="field" style="margin:0"><label>随机种子 · Seed</label><input type="text" id="seed" placeholder="留空则随机" oninput="this.value=this.value.replace(/[^\d]/g,'')"></div>
+          </div>
+          <div class="field">
+            <label>推理步数 · num_inference_steps</label>
+            <select id="inferenceSteps">
+              <option value="" selected>默认由模型决定</option>
+              <option value="20">20 步 · 快速</option>
+              <option value="30">30 步 · 推荐</option>
+              <option value="50">50 步 · 精细</option>
+              <option value="100">100 步 · 极致</option>
+            </select>
+          </div>
+          <div class="field"><label>负向提示词 · Negative Prompt</label><textarea id="negativePrompt" placeholder="blurry, distorted, low quality, watermark" rows="2" style="min-height:62px"></textarea></div>
+        </div>
+
+        <!-- Submit -->
+        <div class="fixed-bottom-bar">
+          <button class="btn btn-primary btn-lg btn-full" id="generateBtn" onclick="generate()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg>
+            <span id="generateLabel">生成视频</span>
+          </button>
+        </div>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Image Section ═══ -->
+    <div class="content-left" id="imageCard">
+      <div style="max-width:640px">
+
+        <div class="field" id="imgRefField" style="display:none">
+          <label>参考图片 <span class="req">*</span></label>
+          <div class="image-row-wrap">
+            <div class="image-row">
+              <input type="text" id="imgRefUrl" placeholder="参考图片 URL，或粘贴 / 拖入本地图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
+              <label class="btn btn-subtle file-upload-btn" style="width:40px;padding:0;height:42px;font-size:18px" title="选择本地图片">
+                📁
+                <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
+              </label>
+            </div>
+            <div class="pic-preview" style="display:none"></div>
+          </div>
+          <div class="field-hint" id="imgRefHint">提供引导生成的参考图链接，或选择 / 粘贴本地图片</div>
+        </div>
+
+        <div class="field prompt-field">
+          <label>提示词 · Prompt <span class="req">*</span></label>
+          <textarea id="imgPrompt" placeholder="描述图像主体、场景、光线与艺术风格…&#10;例如：A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k" style="padding-bottom:38px"></textarea>
+          <button class="sample-btn" onclick="document.getElementById('imgPrompt').value='A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><path d="M14.5 6.5 4 17l3 3L17.5 9.5z"/><path d="m13 8 3 3M18 3l.6 1.8L20.4 5.4l-1.8.6L18 7.8l-.6-1.8L15.6 5.4l1.8-.6zM6 4l.4 1.2L7.6 5.6l-1.2.4L6 7.2l-.4-1.2L4.4 5.6l1.2-.4z"/></svg> 示例
+          </button>
+        </div>
+
+        <div id="imgAdvancedPanel">
+          <div class="field">
+            <label>常用尺寸 · Size Preset</label>
+            <div id="imageAspectPicker">
+              <select id="imgSizePreset" onchange="applyImgSizePreset()">
+                <option value="original" id="imgOriginalSizeOpt" disabled>&#128208; 原图尺寸</option>
+                <option value="1:1" selected>1:1 正方形</option>
+                <option value="3:4">3:4 竖图</option>
+                <option value="4:3">4:3 横图</option>
+                <option value="9:16">9:16 竖屏</option>
+                <option value="16:9">16:9 横屏</option>
+                <option value="2:3">2:3 竖图</option>
+                <option value="3:2">3:2 横图</option>
+                <option value="9:21">9:21 竖屏 FHD</option>
+                <option value="21:9">21:9 横屏 FHD</option>
+                <option value="custom" style="display:none">自定义</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field" style="margin:0"><label>宽度</label><input type="text" id="imgWidth" value="1024" oninput="this.value=this.value.replace(/[^\d]/g,'')"></div>
+            <div class="field" style="margin:0"><label>高度</label><input type="text" id="imgHeight" value="1024" oninput="this.value=this.value.replace(/[^\d]/g,'')"></div>
+          </div>
+          <div class="grid-2">
+            <div class="field" style="margin:0"><label>生图模型 · Model</label><select id="imgModel" class="mono"></select></div>
+            <div class="field" style="margin:0"><label>随机种子 · Seed</label><input type="text" id="imgSeed" placeholder="留空则随机" oninput="this.value=this.value.replace(/[^\d]/g,'')"></div>
+          </div>
+          <div class="field">
+            <label>推理步数</label>
+            <select id="imgInferenceSteps">
+              <option value="" selected>默认由模型决定</option>
+              <option value="20">20 步 · 快速</option>
+              <option value="30">30 步 · 推荐</option>
+              <option value="50">50 步 · 精细</option>
+              <option value="100">100 步 · 极致</option>
+            </select>
+          </div>
+          <div class="field"><label>负向提示词 · Negative Prompt</label><textarea id="imgNegativePrompt" placeholder="blurry, distorted, low quality, watermark" rows="2" style="min-height:62px"></textarea></div>
+        </div>
+
+        <div class="fixed-bottom-bar">
+          <button class="btn btn-primary btn-lg btn-full" id="generateImgBtn" onclick="generateImage()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.2a2 2 0 0 1 2.7 0L20 20.5"/></svg>
+            <span id="generateImgLabel">生成图像</span>
+          </button>
+        </div>
+        <div class="error-msg" id="imgErrorMsg"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Chat Section ═══ -->
+    <div class="content-full" id="chatCard" style="display:none">
+      <div class="studio-card chat-view">
+        <div class="chat-header-bar">
+          <span class="chat-header-label">模型</span>
+          <div style="width:220px"><select id="chatModelSelect" class="mono" style="width:100%"></select></div>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost btn-sm" onclick="clearChat()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M4.5 6.5h15M9 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1.5M6.5 6.5 7.3 19A1.5 1.5 0 0 0 8.8 20.4h6.4A1.5 1.5 0 0 0 16.7 19l.8-12.5"/></svg> 清空对话</button>
+        </div>
+        <div class="chat-messages-area scroll" id="chatMessages">
+          <div class="chat-empty">
+            <div class="nav-logo" style="width:46px;height:46px;border-radius:14px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M12 3.2c.55 4.1 1.85 5.4 5.95 5.95-4.1.55-5.4 1.85-5.95 5.95-.55-4.1-1.85-5.4-5.95-5.95C10.15 8.6 11.45 7.3 12 3.2ZM18.7 14.2c.3 2 .9 2.6 2.9 2.9-2 .3-2.6.9-2.9 2.9-.3-2-.9-2.6-2.9-2.9 2-.3 2.6-.9 2.9-2.9Z"/></svg>
+            </div>
+            <div style="font-size:14.5px;font-weight:600;color:var(--text-soft)">开始一次对话</div>
+            <div style="font-size:12.5px">多模型流式对话 · Ctrl+Enter 发送</div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <div class="chat-input-row">
+            <textarea id="chatInput" placeholder="输入消息… (Ctrl+Enter 发送)" rows="1" onkeydown="handleChatKeydown(event)" style="padding:12px 14px"></textarea>
+            <button class="btn btn-primary" id="chatSendBtn" onclick="sendChat()" style="height:46px;padding:0 18px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="chatSendIcon" style="width:18px;height:18px"><path d="M12 19V6M6 12l6-6 6 6"/></svg>
+              <span id="chatSendLabel">发送</span>
+            </button>
+          </div>
+        </div>
+        <div class="error-msg" id="chatErrorMsg" style="margin:0 18px 14px"></div>
+      </div>
+    </div>
+
+    <!-- ═══ Admin Section ═══ -->
+    <div class="content-full" id="adminCard" style="display:none">
+      <div style="max-width:760px;display:flex;flex-direction:column;gap:18px">
+        <!-- API Token -->
+        <div class="studio-card admin-section">
+          <div class="admin-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="4.2"/><path d="m11 11 8 8M16 16l2-2M19 19l1.5-1.5"/></svg>
+            <h3>API Token</h3>
+          </div>
+          <p class="admin-section-desc">保存后写入本地环境配置文件与浏览器，下次自动回填。服务仅监听 127.0.0.1。</p>
+          <div class="admin-row" style="margin-bottom: 12px; display: flex; gap: 10px;">
+            <div style="flex:1;">
+              <input type="text" id="adminBaseUrl" placeholder="API Base URL (例如: https://apihub.agnes-ai.com/v1)" autocomplete="off">
+            </div>
+          </div>
+          <div class="admin-row" style="margin-bottom: 12px; display: flex; gap: 10px;">
+            <div style="flex:1;position:relative">
+              <input type="password" id="adminApiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="new-password">
+              <button onclick="toggleKeyVisibility()" title="显示/隐藏" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);padding:4px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="2.6"/></svg></button>
+            </div>
+          </div>
+          <div class="admin-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:12.5px" id="keyStatus">
+              <span class="dot" style="width:7px;height:7px;border-radius:99px;background:var(--warning)"></span>
+              <span style="color:var(--warning)">密钥未配置</span>
+            </div>
+            <button class="btn btn-primary" onclick="saveAdminApiKey()" id="saveKeyBtn" style="min-width: 90px; height: 36px; padding: 0 16px;" disabled>保存</button>
+          </div>
+        </div>
+
+        <!-- Model List -->
+        <div class="studio-card admin-section">
+          <div class="admin-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3.5 8.5 4.5-8.5 4.5L3.5 8 12 3.5ZM4 12l8 4.3 8-4.3M4 16l8 4.3 8-4.3"/></svg>
+            <h3>模型列表</h3>
+          </div>
+          <p class="admin-section-desc">从官方 /v1/models 拉取，或手动维护可用模型。</p>
+          <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="fetchModelsFromApi()" id="fetchModelsLabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M20 11.5A8 8 0 1 0 18 17"/><path d="M20 5v6h-6"/></svg> 从接口拉取</button>
+            <button class="btn btn-ghost btn-sm" onclick="addModelRow()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg> 添加模型</button>
+            <button class="btn btn-ghost btn-sm" onclick="resetModelsToDefault()" title="恢复内置模型">↺ 重置</button>
+          </div>
+          <div class="model-table-wrap">
+            <table class="model-table" id="modelTable">
+              <thead><tr><th style="width:50%">模型 ID</th><th style="width:22%">类型</th><th style="width:14%">启用</th><th style="width:14%"></th></tr></thead>
+              <tbody id="modelTableBody"></tbody>
+            </table>
+          </div>
+          <div class="field-hint" id="modelTableHint">点"拉取最新模型"获取列表，或手动添加（适用于 /v1/models 不可用时）。</div>
+        </div>
+
+        <!-- Default Models -->
+        <div class="studio-card admin-section">
+          <div class="admin-section-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2c.55 4.1 1.85 5.4 5.95 5.95-4.1.55-5.4 1.85-5.95 5.95-.55-4.1-1.85-5.4-5.95-5.95C10.15 8.6 11.45 7.3 12 3.2Z"/></svg>
+            <h3>默认模型</h3>
+          </div>
+          <p class="admin-section-desc">各功能默认选用的模型。</p>
+          <div class="grid-3">
+            <div class="field" style="margin:0"><label>视频</label><select id="defaultVideoModel" class="mono"></select></div>
+            <div class="field" style="margin:0"><label>图像</label><select id="defaultImageModel" class="mono"></select></div>
+            <div class="field" style="margin:0"><label>聊天</label><select id="defaultChatModel" class="mono"></select></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg btn-full" onclick="saveAdminConfig()">💾 保存配置</button>
+        <div class="error-msg" id="adminErrorMsg"></div>
+        <div class="admin-success" id="adminSuccessMsg"></div>
+      </div>
+    </div>
+
+    <!-- ── Right Panel (video/image only) ── -->
+    <div class="content-right" id="rightPanel">
+      <!-- Placeholder -->
+      <div class="studio-card result-placeholder" id="resultPlaceholder">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg></div>
+        <div class="title">等待生成</div>
+        <div class="desc">在左侧提交生图或生视频任务，结果会实时显示在这里</div>
+      </div>
+
+      <!-- Status Card -->
+      <div class="studio-card" id="statusCard" style="padding:18px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="status-badge" id="statusBadge">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">-</span>
+          </div>
+          <span class="task-id" id="taskId" style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)"></span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label"><span>生成进度</span><span style="font-family:var(--font-mono);color:var(--text-soft)" id="progressPct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-2))"></div></div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:7px" id="statusNote"></div>
+        <div class="poll-retry-info" id="pollRetryInfo">
+          <div class="retry-header"><span id="retryTitle"></span><span id="retryCount"></span></div>
+          <div class="retry-detail" id="retryDetail"></div>
+        </div>
+      </div>
+
+      <!-- Result Card - Video -->
+      <div class="studio-card" id="resultCard">
+        <video id="videoPlayer" controls playsinline style="width:100%;max-height:340px;display:block;background:#000;border-radius:var(--r)"></video>
+        <div class="result-footer">
+          <span class="result-meta" id="resultMeta"></span>
+          <a class="btn btn-solid btn-sm" id="downloadBtn" href="#" download="agnes-video.mp4" target="_blank"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg> 下载视频</a>
+        </div>
+      </div>
+
+      <!-- Result Card - Image -->
+      <div class="studio-card" id="imageResultCard">
+        <div class="media-frame" style="border-radius:var(--r);margin-bottom:0">
+          <img id="imagePlayer" src="" alt="" style="max-width:100%;max-height:340px;object-fit:contain;display:none">
+        </div>
+        <div class="result-footer">
+          <span class="result-meta" id="imageResultMeta"></span>
+          <button class="btn btn-solid btn-sm" id="imgDownloadBtn" onclick="void(0)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><path d="M12 4v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg> 下载图片</button>
+        </div>
+      </div>
+
+      <!-- History strip -->
+      <div style="margin-top:10px">
+        <div class="history-label">最近生成</div>
+        <div class="history-grid" id="historyGrid">
+          <div class="history-item" title="宇航员 · 红色星球">
+            <div class="history-thumb" style="background:radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.16 268), oklch(0.28 0.1 308) 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg><span class="ar-tag">16:9</span></div>
+            <div class="history-title">宇航员 · 红色星球</div>
+          </div>
+          <div class="history-item" title="赛博女神肖像">
+            <div class="history-thumb" style="background:radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.15 320), oklch(0.26 0.09 360) 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.2a2 2 0 0 1 2.7 0L20 20.5"/></svg><span class="ar-tag">3:4</span></div>
+            <div class="history-title">赛博女神肖像</div>
+          </div>
+          <div class="history-item" title="雨夜霓虹街道">
+            <div class="history-thumb" style="background:radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.15 210), oklch(0.28 0.1 250) 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg><span class="ar-tag">9:16</span></div>
+            <div class="history-title">雨夜霓虹街道</div>
+          </div>
+          <div class="history-item" title="极简产品主图">
+            <div class="history-thumb" style="background:radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.15 150), oklch(0.28 0.1 190) 70%)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.2a2 2 0 0 1 2.7 0L20 20.5"/></svg><span class="ar-tag">1:1</span></div>
+            <div class="history-title">极简产品主图</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end main-area -->
+</div><!-- end layout -->
+
+<!-- ── Tweaks Panel HTML ── -->
+<div id="tweaksPanel" class="twk-panel" style="right: 16px; bottom: 16px; display: none;">
+  <div class="twk-hd" id="tweaksHeader">
+    <b>外观微调</b>
+    <button class="twk-x" aria-label="Close tweaks" id="tweaksCloseBtn">✕</button>
+  </div>
+  <div class="twk-body">
+    <div class="twk-sect">外观</div>
+    <div class="twk-row twk-row-h">
+      <div class="twk-lbl"><span>主题</span></div>
+      <div class="twk-seg" id="tweakThemeSeg">
+        <div class="twk-seg-thumb" id="tweakThemeThumb" style="left: 2px; width: calc((100% - 4px) / 2)"></div>
+        <button type="button" data-val="dark">暗色</button>
+        <button type="button" data-val="light">亮色</button>
+      </div>
+    </div>
+    <div class="twk-row">
+      <div class="twk-lbl"><span>强调色</span></div>
+      <div class="twk-chips" id="tweakAccentChips"></div>
+    </div>
+    <div class="twk-sect">布局</div>
+    <div class="twk-row">
+      <div class="twk-lbl"><span>信息密度</span></div>
+      <div class="twk-seg" id="tweakDensitySeg">
+        <div class="twk-seg-thumb" id="tweakDensityThumb" style="left: 2px; width: calc((100% - 4px) / 3)"></div>
+        <button type="button" data-val="compact">紧凑</button>
+        <button type="button" data-val="regular">常规</button>
+        <button type="button" data-val="comfy">宽松</button>
+      </div>
+    </div>
+    <div class="twk-row">
+      <div class="twk-lbl"><span>界面缩放</span><span class="twk-val" id="tweakScaleVal">100%</span></div>
+      <input type="range" class="twk-slider" id="tweakScaleSlider" min="85" max="115" step="5" value="100">
+    </div>
+  </div>
 </div>
 
-<!-- Generation Card - Admin -->
-<div class="card" id="adminCard" style="display:none">
-  <div class="form-body">
-
-    <!-- ── API Token ── -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">🔑 API Token</h3>
-      <div class="field">
-        <label>Agnes API Key</label>
-        <div class="image-row">
-          <input type="password" id="adminApiKey" placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off">
-          <button class="btn btn-ghost" onclick="toggleKeyVisibility()" title="显示/隐藏">👁</button>
-          <button class="btn btn-primary" style="width:auto; padding:10px 20px" onclick="saveAdminApiKey()">保存</button>
-        </div>
-        <div class="hint">保存到本地 <code>key.txt</code>，不会上传到 GitHub（已配置 .gitignore）。</div>
-      </div>
-    </div>
-
-    <!-- ── 模型列表 ── -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">🧠 模型列表</h3>
-      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap">
-        <button class="btn btn-primary" style="width:auto; padding:10px 18px" onclick="fetchModelsFromApi()">
-          <span id="fetchModelsLabel">🔄 从官方拉取最新模型</span>
-        </button>
-        <button class="btn btn-ghost" onclick="addModelRow()">+ 手动添加模型</button>
-        <button class="btn btn-ghost" onclick="resetModelsToDefault()" title="恢复内置 video/image 模型">↺ 重置</button>
-      </div>
-
-      <div class="model-table-wrap">
-        <table class="model-table" id="modelTable">
-          <thead>
-            <tr>
-              <th style="width:50%">模型 ID</th>
-              <th style="width:22%">类型</th>
-              <th style="width:14%">启用</th>
-              <th style="width:14%"></th>
-            </tr>
-          </thead>
-          <tbody id="modelTableBody"></tbody>
-        </table>
-      </div>
-      <div class="hint" id="modelTableHint">点"拉取最新模型"获取列表，或手动添加（适用于 /v1/models 不可用时）。</div>
-    </div>
-
-    <!-- ── 默认模型 ── -->
-    <div class="admin-section">
-      <h3 class="admin-section-title">⭐ 默认模型</h3>
-      <div class="grid-3">
-        <div class="field" style="margin:0">
-          <label>🎬 视频默认模型</label>
-          <select id="defaultVideoModel"></select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>🎨 图像默认模型</label>
-          <select id="defaultImageModel"></select>
-        </div>
-        <div class="field" style="margin:0">
-          <label>💬 聊天默认模型</label>
-          <select id="defaultChatModel"></select>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:20px">
-      <button class="btn btn-primary" onclick="saveAdminConfig()">💾 保存配置</button>
-    </div>
-
-    <div class="error-msg" id="adminErrorMsg"></div>
-    <div class="admin-success" id="adminSuccessMsg"></div>
-  </div>
-  </div><!-- end adminCard -->
-  </div><!-- end main-left -->
-
-  <!-- ─── Right panel: status / results ─── -->
-  <div class="main-right">
-    <!-- Placeholder shown when no result -->
-    <div class="result-placeholder" id="resultPlaceholder">
-      <div style="font-size:48px; margin-bottom:12px; opacity:0.5">🎬</div>
-      <div style="font-size:14px; color:var(--text-muted); font-weight:500; margin-bottom:6px">等待生成</div>
-      <div style="font-size:12px; color:var(--text-muted); opacity:0.7">在左侧提交生图或生视频任务，结果将显示在这里</div>
-    </div>
-
-    <!-- Status Card -->
-    <div class="status-card" id="statusCard">
-      <div class="status-header">
-        <div class="status-badge" id="statusBadge">
-          <span class="dot" id="statusDot"></span>
-          <span id="statusText">-</span>
-        </div>
-        <div class="task-id" id="taskId"></div>
-      </div>
-
-      <div class="progress-wrap">
-        <div class="progress-label">
-          <span>生成进度</span>
-          <span id="progressPct">0%</span>
-        </div>
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill" style="width:0%"></div>
-        </div>
-      </div>
-
-      <div id="statusNote" style="font-size:13px; color:var(--text-muted)"></div>
-      <div class="poll-retry-info" id="pollRetryInfo">
-        <div class="retry-header">
-          <span id="retryTitle"></span>
-          <span id="retryCount"></span>
-        </div>
-        <div class="retry-detail" id="retryDetail"></div>
-      </div>
-    </div>
-
-    <!-- Result Card - Video -->
-    <div class="result-card" id="resultCard">
-      <video id="videoPlayer" controls playsinline></video>
-      <div class="result-footer">
-        <div class="result-meta" id="resultMeta"></div>
-        <a class="btn btn-download" id="downloadBtn" href="#" download="agnes-video.mp4" target="_blank">
-          ⬇ 下载视频
-        </a>
-      </div>
-    </div>
-
-    <!-- Result Card - Image -->
-    <div class="result-card" id="imageResultCard">
-      <div class="image-preview-wrap">
-        <img id="imagePlayer" src="" alt="" style="display:none">
-      </div>
-      <div class="result-footer">
-        <div class="result-meta" id="imageResultMeta"></div>
-        <button class="btn btn-download" id="imgDownloadBtn">
-          ⬇ 下载图片
-        </button>
-      </div>
-    </div>
-  </div><!-- end main-right -->
-  </div><!-- end main-wrapper -->
-
 <script>
+  // ═══════════════════════════════════════════════════════════════
+  //  UI Augmentation (theme toggle, topbar title, API pill, Tweaks & History)
+  // ═══════════════════════════════════════════════════════════════
+
+  const TOPBAR_MAP = {
+    video: { title: '视频生成', sub: 'agnes-video-v2.0 · 文 / 图 / 多图 / 关键帧 → 视频' },
+    image: { title: '图像生成', sub: 'agnes-image-2.1-flash · 文生图 / 图生图 / 构图保留 / 高密度' },
+    chat:  { title: '聊天',     sub: '多模型流式对话 · 历史自动保存' },
+    admin: { title: '管理',     sub: 'API 密钥 · 模型列表 · 默认模型' },
+  };
+  let currentSection = 'image';
+  let isDark = true;
+
+  // ── Tweaks State & Logic ──
+  const ACCENTS = { violet: 292, indigo: 270, cyan: 210, emerald: 158, amber: 72, rose: 18 };
+  const ACCENT_SWATCH = { violet: "#8b6fff", indigo: "#6f7bff", cyan: "#1fb6c9", emerald: "#1fa86a", amber: "#d99413", rose: "#e0556a" };
+  const ACCENT_LABEL = { violet: "紫", indigo: "靛", cyan: "青", emerald: "翠", amber: "琥", rose: "玫" };
+
+  let tweakState = {
+    theme: 'dark',
+    accent: 'violet',
+    density: 'regular',
+    uiScale: 100
+  };
+
+  function loadTweaks() {
+    try {
+      const saved = localStorage.getItem('agnes_tweaks_settings');
+      if (saved) {
+        Object.assign(tweakState, JSON.parse(saved));
+      }
+    } catch(e) {}
+    applyTweaks(tweakState);
+  }
+
+  function saveTweaks() {
+    localStorage.setItem('agnes_tweaks_settings', JSON.stringify(tweakState));
+  }
+
+  function applyTweaks(t) {
+    const root = document.documentElement;
+    root.setAttribute("data-theme", t.theme);
+    root.style.setProperty("--accent-h", ACCENTS[t.accent] ?? 292);
+    root.style.setProperty("--density", t.density === "compact" ? 0.82 : t.density === "comfy" ? 1.18 : 1);
+    document.body.style.zoom = t.uiScale === 100 ? "" : t.uiScale / 100;
+
+    isDark = (t.theme === 'dark');
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) {
+      toggle.classList.toggle('light', !isDark);
+      // 滑块内图标：暗色时显示月亮，亮色时显示太阳（与原型一致）
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        if (isDark) {
+          icon.innerHTML = '<path d="M20 13.5A8 8 0 1 1 10.5 4a6.3 6.3 0 0 0 9.5 9.5Z"/>';
+        } else {
+          icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.4M12 19.1v2.4M21.5 12h-2.4M4.9 12H2.5M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6"/>';
+        }
+      }
+    }
+
+    updateTweaksUI();
+  }
+
+  function updateTweaksUI() {
+    const themeSeg = document.getElementById('tweakThemeSeg');
+    const themeThumb = document.getElementById('tweakThemeThumb');
+    if (themeSeg && themeThumb) {
+      const isLight = tweakState.theme === 'light';
+      themeThumb.style.left = isLight ? 'calc(2px + (100% - 4px) / 2)' : '2px';
+      themeSeg.querySelectorAll('button').forEach(btn => {
+        btn.setAttribute('aria-checked', btn.dataset.val === tweakState.theme ? 'true' : 'false');
+      });
+    }
+
+    const densitySeg = document.getElementById('tweakDensitySeg');
+    const densityThumb = document.getElementById('tweakDensityThumb');
+    if (densitySeg && densityThumb) {
+      const idx = ['compact', 'regular', 'comfy'].indexOf(tweakState.density);
+      densityThumb.style.left = `calc(2px + ${idx} * (100% - 4px) / 3)`;
+      densitySeg.querySelectorAll('button').forEach(btn => {
+        btn.setAttribute('aria-checked', btn.dataset.val === tweakState.density ? 'true' : 'false');
+      });
+    }
+
+    const scaleVal = document.getElementById('tweakScaleVal');
+    const scaleSlider = document.getElementById('tweakScaleSlider');
+    if (scaleVal && scaleSlider) {
+      scaleVal.textContent = tweakState.uiScale + '%';
+      scaleSlider.value = tweakState.uiScale;
+    }
+
+    const chips = document.getElementById('tweakAccentChips');
+    if (chips) {
+      chips.innerHTML = '';
+      Object.keys(ACCENT_SWATCH).forEach(k => {
+        const active = tweakState.accent === k;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'twk-chip';
+        btn.dataset.val = k;
+        btn.dataset.on = active ? '1' : '0';
+        btn.style.background = ACCENT_SWATCH[k];
+        btn.title = ACCENT_LABEL[k];
+        if (active) {
+          btn.innerHTML = `<svg viewBox="0 0 14 14"><path d="M3 7.2 L5.8 10 L11 4.2" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" stroke="${k === 'amber' ? 'rgba(0,0,0,.78)' : '#fff'}" /></svg>`;
+        }
+        btn.onclick = () => {
+          tweakState.accent = k;
+          saveTweaks();
+          applyTweaks(tweakState);
+        };
+        chips.appendChild(btn);
+      });
+    }
+  }
+
+  function initTweaksPanel() {
+    const panel = document.getElementById('tweaksPanel');
+    const header = document.getElementById('tweaksHeader');
+    const closeBtn = document.getElementById('tweaksCloseBtn');
+
+    let isDragging = false;
+    let startX, startY, startRight, startBottom;
+
+    header.onmousedown = (e) => {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = panel.getBoundingClientRect();
+      startRight = window.innerWidth - rect.right;
+      startBottom = window.innerHeight - rect.bottom;
+
+      document.onmousemove = (ev) => {
+        if (!isDragging) return;
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let r = startRight - dx;
+        let b = startBottom - dy;
+        r = Math.max(8, Math.min(window.innerWidth - panel.offsetWidth - 8, r));
+        b = Math.max(8, Math.min(window.innerHeight - panel.offsetHeight - 8, b));
+        panel.style.right = r + 'px';
+        panel.style.bottom = b + 'px';
+      };
+
+      document.onmouseup = () => {
+        isDragging = false;
+        document.onmousemove = null;
+        document.onmouseup = null;
+      };
+    };
+
+    closeBtn.onclick = () => {
+      panel.style.display = 'none';
+      document.getElementById('navTweaks').classList.remove('active');
+    };
+
+    document.getElementById('tweakThemeSeg').querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        tweakState.theme = btn.dataset.val;
+        saveTweaks();
+        applyTweaks(tweakState);
+      };
+    });
+
+    document.getElementById('tweakDensitySeg').querySelectorAll('button').forEach(btn => {
+      btn.onclick = () => {
+        tweakState.density = btn.dataset.val;
+        saveTweaks();
+        applyTweaks(tweakState);
+      };
+    });
+
+    document.getElementById('tweakScaleSlider').oninput = (e) => {
+      tweakState.uiScale = Number(e.target.value);
+      saveTweaks();
+      applyTweaks(tweakState);
+    };
+  }
+
+  function toggleTweaksPanel() {
+    const panel = document.getElementById('tweaksPanel');
+    const navBtn = document.getElementById('navTweaks');
+    if (panel.style.display === 'none') {
+      panel.style.display = 'flex';
+      navBtn.classList.add('active');
+    } else {
+      panel.style.display = 'none';
+      navBtn.classList.remove('active');
+    }
+  }
+
+  // ── History Logic ──
+  const DEFAULT_HISTORY = [
+    { id: 'h_1', title: '宇航员 · 红色星球', kind: 'video', ar: '16:9', tone: 268, prompt: 'A young astronaut walking across a red desert planet, dust blowing in the wind, slow cinematic tracking shot, dramatic sunset lighting, realistic sci-fi style', model: 'agnes-video-v2.0', width: 1152, height: 768 },
+    { id: 'h_2', title: '赛博女神肖像', kind: 'image', ar: '1:1', tone: 320, prompt: 'A stunning portrait of a cybernetic goddess, intricate neon makeup, glowing neural pathways, cyberpunk city background, hyperrealistic, octane render, 8k', model: 'agnes-image-2.1-flash', width: 1024, height: 1024 },
+    { id: 'h_3', title: '雨夜霓虹街道', kind: 'video', ar: '9:16', tone: 210, prompt: 'A rainy night in Tokyo, neon street signs reflecting on wet asphalt, people walking with umbrellas, cinematic atmosphere, slow tracking shot', model: 'agnes-video-v2.0', width: 720, height: 1280 },
+    { id: 'h_4', title: '极简产品主图', kind: 'image', ar: '1:1', tone: 150, prompt: 'Minimalist product shot of a luxury perfume bottle on a concrete pedestal, soft studio lighting, clean shadows, elegant composition', model: 'agnes-image-2.1-flash', width: 1024, height: 1024 }
+  ];
+
+  let generateHistory = [];
+
+  async function loadHistory() {
+    try {
+      const res = await fetch('/api/history');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        generateHistory = data;
+      } else {
+        generateHistory = [...DEFAULT_HISTORY];
+      }
+    } catch(e) {
+      console.warn('获取历史记录失败，使用回落数据:', e);
+      generateHistory = [...DEFAULT_HISTORY];
+    }
+    renderHistory();
+  }
+
+  async function saveHistoryItem(item) {
+    try {
+      const res = await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+      const data = await res.json();
+      if (data.success && data.item) {
+        // 移除去重，保留多次生成的不同结果
+        generateHistory.unshift(data.item);
+        if (generateHistory.length > 8) {
+          generateHistory.pop();
+        }
+        renderHistory();
+      }
+    } catch (err) {
+      console.error('保存历史记录失败:', err);
+    }
+  }
+
+  async function deleteHistoryItem(id) {
+    try {
+      const res = await fetch(`/api/history?id=${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        generateHistory = generateHistory.filter(h => h.id !== id);
+        renderHistory();
+      }
+    } catch (err) {
+      console.error('删除历史记录失败:', err);
+    }
+  }
+
+  function renderHistory() {
+    const grid = document.getElementById('historyGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    generateHistory.forEach(h => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.title = h.prompt;
+      
+      const kindIcon = h.kind === 'video'
+        ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.2" y="4.5" width="17.6" height="15" rx="2.5"/><path d="M8 4.5v15M16 4.5v15M3.2 9.5h4.8M16 9.5h4.8M3.2 14.5h4.8M16 14.5h4.8"/></svg>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="kind-icon"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 17 4.5-4.2a2 2 0 0 1 2.7 0L20 20.5"/></svg>`;
+      
+      const isVideo = h.kind === 'video';
+      const bgStyle = (h.url && !isVideo)
+        ? `background-image: url(${h.url}); background-size: cover; background-position: center;`
+        : `background: radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.15 ${h.tone}), oklch(0.28 0.09 ${h.tone + 40}) 70%)`;
+
+      item.innerHTML = `
+        <div class="history-thumb" style="${bgStyle}">
+          ${kindIcon}
+          <span class="ar-tag">${h.ar}</span>
+          <button class="history-del-btn" title="删除" onclick="event.stopPropagation(); deleteHistoryItem('${h.id}')">×</button>
+        </div>
+        <div class="history-title">${h.title}</div>
+      `;
+      
+      item.onclick = () => fillHistoryParams(h);
+      grid.appendChild(item);
+    });
+  }
+
+  function fillHistoryParams(h) {
+    if (h.kind === 'video') {
+      switchMediaType('video');
+      document.getElementById('prompt').value = h.prompt;
+      
+      const aspectSelect = document.getElementById('videoAspect');
+      if (aspectSelect) {
+        aspectSelect.value = h.ar;
+        applyVideoAspect();
+      }
+      if (h.model) {
+        const modelSelect = document.getElementById('videoModelSelect');
+        if (modelSelect && Array.from(modelSelect.options).some(o => o.value === h.model)) {
+          modelSelect.value = h.model;
+        }
+      }
+      
+      if (h.url) {
+        showResult({
+          video_url: h.url,
+          seconds: '5.0',
+          size: `${h.width}x${h.height}`
+        });
+      } else {
+        hideResult();
+        const placeholder = document.getElementById('resultPlaceholder');
+        placeholder.classList.add('hidden');
+        const stCard = document.getElementById('statusCard');
+        stCard.classList.remove('visible');
+        
+        const card = document.getElementById('resultCard');
+        const video = document.getElementById('videoPlayer');
+        video.src = '';
+        video.controls = false;
+        video.style.background = `radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.16 ${h.tone}), oklch(0.28 0.1 ${h.tone + 40}) 70%, oklch(0.2 0.05 ${h.tone}) 100%)`;
+        const meta = document.getElementById('resultMeta');
+        meta.innerHTML = `<span>(原型演示 ${h.ar})</span>`;
+        card.classList.add('visible');
+      }
+      
+    } else {
+      switchMediaType('image');
+      document.getElementById('imgPrompt').value = h.prompt;
+      
+      const presetSelect = document.getElementById('imgSizePreset');
+      if (presetSelect) {
+        presetSelect.value = h.ar;
+        applyImgSizePreset();
+      }
+      if (h.model) {
+        const modelSelect = document.getElementById('imgModel');
+        if (modelSelect && Array.from(modelSelect.options).some(o => o.value === h.model)) {
+          modelSelect.value = h.model;
+        }
+      }
+      
+      if (h.url) {
+        showImgResult(h.url, h.width, h.height);
+      } else {
+        hideImgResult();
+        const placeholder = document.getElementById('resultPlaceholder');
+        placeholder.classList.add('hidden');
+        const stCard = document.getElementById('statusCard');
+        stCard.classList.remove('visible');
+        
+        const card = document.getElementById('imageResultCard');
+        const img = document.getElementById('imagePlayer');
+        img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+        img.style.display = 'block';
+        img.style.background = `radial-gradient(120% 120% at 30% 20%, oklch(0.5 0.15 ${h.tone}), oklch(0.26 0.09 ${h.tone + 40}) 70%)`;
+        
+        const meta = document.getElementById('imageResultMeta');
+        meta.innerHTML = `<span>(原型演示 ${h.ar})</span>`;
+        card.classList.add('visible');
+      }
+    }
+  }
+
+  function truncatePrompt(str) {
+    if (str.length <= 12) return str;
+    return str.slice(0, 10) + '…';
+  }
+
+  // ── Aspect Picker Setup ──
+  const VIDEO_ASPECTS = [
+    { id: '16:9', label: '16:9', w: 20, h: 11.25 },
+    { id: '9:16', label: '9:16', w: 11.25, h: 20 },
+    { id: '1:1',  label: '1:1',  w: 16, h: 16 },
+    { id: '4:3',  label: '4:3',  w: 18, h: 13.5 },
+    { id: '3:4',  label: '3:4',  w: 13.5, h: 18 }
+  ];
+
+  const IMAGE_PRESETS = [
+    { id: '1:1',  label: '1:1',  w: 16, h: 16 },
+    { id: '3:4',  label: '3:4',  w: 13.5, h: 18 },
+    { id: '4:3',  label: '4:3',  w: 18, h: 13.5 },
+    { id: '9:16', label: '9:16', w: 11.25, h: 20 },
+    { id: '16:9', label: '16:9', w: 20, h: 11.25 },
+    { id: '2:3',  label: '2:3',  w: 12, h: 18 },
+    { id: '3:2',  label: '3:2',  w: 18, h: 12 },
+    { id: '9:21', label: '9:21', w: 8.5, h: 20 },
+    { id: '21:9', label: '21:9', w: 20, h: 8.5 }
+  ];
+
+  function setupAspectPicker(selectId, pickerContainerId, presetList) {
+    const select = document.getElementById(selectId);
+    const container = document.getElementById(pickerContainerId);
+    if (!select || !container) return;
+
+    select.style.display = 'none';
+
+    Array.from(container.children).forEach(child => {
+      if (child !== select) child.remove();
+    });
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'aspect-picker';
+
+    presetList.forEach(p => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'aspect-btn';
+      btn.dataset.val = p.id;
+      if (select.value === p.id) {
+        btn.classList.add('active');
+      }
+
+      btn.innerHTML = `
+        <div class="box">
+          <div class="box-inner" style="width: ${p.w}px; height: ${p.h}px; border: 1.5px solid currentColor; opacity: 0.85"></div>
+        </div>
+        <div class="ratio-label">${p.label}</div>
+      `;
+
+      btn.onclick = () => {
+        select.value = p.id;
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      };
+
+      wrapper.appendChild(btn);
+    });
+
+    select.addEventListener('change', () => {
+      const val = select.value;
+      wrapper.querySelectorAll('.aspect-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.val === val);
+      });
+    });
+
+    container.appendChild(wrapper);
+  }
+
+  // Section nav highlight
+  const origSwitchMediaType = window.switchMediaType;
+  window.switchMediaType = function(type) {
+    origSwitchMediaType(type);
+    currentSection = type;
+    // Update nav rail
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const navBtn = document.getElementById('nav' + type.charAt(0).toUpperCase() + type.slice(1));
+    if (navBtn) navBtn.classList.add('active');
+    // Update topbar
+    const m = TOPBAR_MAP[type];
+    if (m) { document.getElementById('topbarTitle').textContent = m.title; document.getElementById('topbarSub').textContent = m.sub; }
+    
+    // 控制顶栏切换二级页签与纯文字标题的动态展示
+    const topbarTabs = document.getElementById('topbarTabsContainer');
+    const topbarText = document.getElementById('topbarTextTitle');
+    const modeTabs = document.getElementById('modeTabs');
+    const imgModeTabs = document.getElementById('imgModeTabs');
+
+    if (type === 'video') {
+      if (topbarTabs) topbarTabs.style.display = 'flex';
+      if (topbarText) topbarText.style.display = 'none';
+      if (modeTabs) modeTabs.style.display = 'flex';
+      if (imgModeTabs) imgModeTabs.style.display = 'none';
+    } else if (type === 'image') {
+      if (topbarTabs) topbarTabs.style.display = 'flex';
+      if (topbarText) topbarText.style.display = 'none';
+      if (modeTabs) modeTabs.style.display = 'none';
+      if (imgModeTabs) imgModeTabs.style.display = 'flex';
+    } else {
+      if (topbarTabs) topbarTabs.style.display = 'none';
+      if (topbarText) topbarText.style.display = 'block';
+    }
+
+    // Show/hide right panel
+    const rp = document.getElementById('rightPanel');
+    if (type === 'chat' || type === 'admin') {
+      rp.style.display = 'none';
+    } else {
+      rp.style.display = '';
+    }
+  };
+
+  // Theme toggle
+  function toggleTheme() {
+    isDark = !isDark;
+    tweakState.theme = isDark ? 'dark' : 'light';
+    saveTweaks();
+    applyTweaks(tweakState);
+  }
+
+  // API pill updates (called from original JS when key is saved)
+  function updateApiStatus(ok) {
+    const pill = document.getElementById('apiPill');
+    if (pill) pill.className = 'api-pill ' + (ok ? 'ok' : 'warn');
+    const apiPillText = document.getElementById('apiPillText');
+    if (apiPillText) apiPillText.textContent = ok ? 'API 就绪' : '未配置密钥';
+    const dot = document.getElementById('keyDot');
+    if (dot) dot.className = 'key-dot ' + (ok ? 'ok' : 'missing');
+
+    // 联动更新管理页面里的密钥状态文字与小圆点
+    const statusEl = document.getElementById('keyStatus');
+    if (statusEl) {
+      if (ok) {
+        statusEl.innerHTML = `<span class="dot" style="width:7px;height:7px;border-radius:99px;background:var(--success)"></span><span style="color:var(--success)">密钥已配置</span>`;
+      } else {
+        statusEl.innerHTML = `<span class="dot" style="width:7px;height:7px;border-radius:99px;background:var(--warning)"></span><span style="color:var(--warning)">密钥未配置</span>`;
+      }
+    }
+  }
+
+  // Save button feedback
+  const origSaveAdminApiKey = window.saveAdminApiKey;
+  if (origSaveAdminApiKey) {
+    window.saveAdminApiKey = function() {
+      origSaveAdminApiKey();
+      setTimeout(() => updateApiStatus(!!document.getElementById('adminApiKey').value.trim()), 200);
+    };
+  }
+  // Also refresh on DOMContentLoaded
+  const origContentLoaded = document.addEventListener;
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initial API status
+    updateApiStatus(!!(cachedApiKey || document.getElementById('adminApiKey').value.trim()));
+    // Hide right panel initially for non-video/image
+  });
+
+  // ═══════════════════════════════════════════════════════════════
+  //  Original business logic (from index.html.orig, lines 1174+)
+  // ═══════════════════════════════════════════════════════════════
   // ── Constants ────────────────────────────────────────────────────────
-  const BASE_URL = '';
+  function getBaseUrl() {
+    return ''; // 始终走本地代理转发，以正确注入 Authorization 头部并避免跨域
+  }
   const POLL_INTERVAL_MS = 3000;
 
   // 内置回落模型（/v1/models 不可用时使用，与文档中提及的模型保持一致）
@@ -1183,12 +1755,14 @@
   ];
 
   // ── State ────────────────────────────────────────────────────────────
-  let currentMediaType = 'video';
+  let currentMediaType = 'image';
   let currentMode = 'text';
   let currentImgMode = 'txt2img';
   let pollTimer = null;
   let cachedApiKey = '';
+  let activeTaskBody = null;
   let appConfig = {
+    baseUrl: 'https://apihub.agnes-ai.com/v1',
     videoModel: 'agnes-video-v2.0',
     imageModel: 'agnes-image-2.1-flash',
     chatModel: '',
@@ -1198,13 +1772,42 @@
 
   // ── Init ─────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', async () => {
+    loadTweaks();
+    initTweaksPanel();
+    loadHistory();
+    setupAspectPicker('videoAspect', 'videoAspectPicker', VIDEO_ASPECTS);
+    setupAspectPicker('imgSizePreset', 'imageAspectPicker', IMAGE_PRESETS);
     await loadApiKey();
     await loadConfig();
+
+    // 记录 API Token 和 Base URL 的初始值
+    initialApiKey = document.getElementById('adminApiKey').value.trim();
+    initialBaseUrl = document.getElementById('adminBaseUrl').value.trim();
+
+    // 监听输入变化以决定是否启用保存按钮
+    document.getElementById('adminApiKey').addEventListener('input', checkAdminTokenChanges);
+    document.getElementById('adminBaseUrl').addEventListener('input', checkAdminTokenChanges);
+    checkAdminTokenChanges();
+
+    // 监听图像宽高输入框的用户修改事件，重置常用尺寸选择
+    const handleDimensionInput = () => {
+      const select = document.getElementById('imgSizePreset');
+      if (select && select.value !== 'custom') {
+        select.value = 'custom';
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    };
+    const imgWidthEl = document.getElementById('imgWidth');
+    const imgHeightEl = document.getElementById('imgHeight');
+    if (imgWidthEl) imgWidthEl.addEventListener('input', handleDimensionInput);
+    if (imgHeightEl) imgHeightEl.addEventListener('input', handleDimensionInput);
+
     refreshModelSelects();
     renderModelTable();
     updateModeUI();
     applyImgSizePreset();
     loadChatHistory();
+    switchMediaType('image');
   });
 
   // 一级页签切换逻辑
@@ -1238,26 +1841,21 @@
 
     // 默认显示占位符，有结果/状态时隐藏
     placeholder.classList.add('hidden');
+    placeholder.style.display = 'none';
 
     if (type === 'video') {
-      if (document.getElementById('videoPlayer').src) videoResult.classList.add('visible');
-      else if (pollTimer) statusCard.classList.add('visible');
-      else placeholder.classList.remove('hidden');
+      if (document.getElementById('videoPlayer').src) { videoResult.classList.add('visible'); }
+      else if (pollTimer) { statusCard.classList.add('visible'); }
+      else { placeholder.classList.remove('hidden'); placeholder.style.display = 'flex'; }
     } else if (type === 'image') {
-      if (document.getElementById('imagePlayer').style.display !== 'none') imageResult.classList.add('visible');
-      else placeholder.classList.remove('hidden');
+      if (document.getElementById('imagePlayer').style.display !== 'none') { imageResult.classList.add('visible'); }
+      else { placeholder.classList.remove('hidden'); placeholder.style.display = 'flex'; }
     } else {
       placeholder.classList.remove('hidden');
+      placeholder.style.display = 'flex';
     }
   }
 
-  // 图像高级参数展开
-  function toggleImgAdvanced() {
-    const panel = document.getElementById('imgAdvancedPanel');
-    const chevron = document.getElementById('imgChevron');
-    const open = panel.classList.toggle('open');
-    chevron.classList.toggle('open', open);
-  }
 
   // 视频比例自动填充
   function applyVideoAspect() {
@@ -1276,8 +1874,23 @@
     }
   }
 
+  // 上传的原图尺寸缓存
+  let uploadedOriginalWidth = 0;
+  let uploadedOriginalHeight = 0;
+
   // 图像常用尺寸 preset 应用
   function applyImgSizePreset() {
+    const val = document.getElementById('imgSizePreset').value;
+
+    // 原图尺寸
+    if (val === 'original') {
+      if (uploadedOriginalWidth > 0 && uploadedOriginalHeight > 0) {
+        document.getElementById('imgWidth').value = uploadedOriginalWidth;
+        document.getElementById('imgHeight').value = uploadedOriginalHeight;
+      }
+      return;
+    }
+
     const map = {
       '1:1':  [1024, 1024],
       '3:4':  [768, 1024],
@@ -1290,10 +1903,10 @@
       '3:2':  [1024, 683],
       'custom': null,
     };
-    const [w, h] = map[document.getElementById('imgSizePreset').value];
-    if (w !== undefined) {
-      document.getElementById('imgWidth').value = w;
-      document.getElementById('imgHeight').value = h;
+    const entry = map[val];
+    if (entry) {
+      document.getElementById('imgWidth').value = entry[0];
+      document.getElementById('imgHeight').value = entry[1];
     }
   }
 
@@ -1326,6 +1939,22 @@
     }
   }
 
+  let initialBaseUrl = '';
+  let initialApiKey = '';
+
+  function checkAdminTokenChanges() {
+    const currentBaseUrl = document.getElementById('adminBaseUrl').value.trim();
+    const currentApiKey = document.getElementById('adminApiKey').value.trim();
+    const saveBtn = document.getElementById('saveKeyBtn');
+    if (saveBtn) {
+      if (currentBaseUrl === initialBaseUrl && currentApiKey === initialApiKey) {
+        saveBtn.disabled = true;
+      } else {
+        saveBtn.disabled = false;
+      }
+    }
+  }
+
   // ── API Key persistence ───────────────────────────────────────────────
   async function loadApiKey() {
     // 优先从后端获取保存的 API Key
@@ -1336,6 +1965,7 @@
         cachedApiKey = data.apiKey;
         const adminInput = document.getElementById('adminApiKey');
         if (adminInput) adminInput.value = data.apiKey;
+        updateApiStatus(true);
         return;
       }
     } catch (err) {
@@ -1347,22 +1977,40 @@
     cachedApiKey = saved;
     const adminInput = document.getElementById('adminApiKey');
     if (adminInput) adminInput.value = saved;
+    updateApiStatus(!!saved);
   }
 
-  // 管理页保存 API Key
+  // 管理页保存 API Key 与 Base URL (合并保存)
   async function saveAdminApiKey() {
     const val = document.getElementById('adminApiKey').value.trim();
     cachedApiKey = val;
     localStorage.setItem('agnes_api_key', val);
 
+    // 获取并更新 Base URL 到全局配置中
+    const baseUrlVal = document.getElementById('adminBaseUrl').value.trim() || 'https://apihub.agnes-ai.com/v1';
+    appConfig.baseUrl = baseUrlVal;
+
     try {
-      const res = await fetch('/api/key', {
+      // 1. 保存 API Key
+      const resKey = await fetch('/api/key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ apiKey: val }),
       });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      showAdminSuccess('✓ API Key 已保存');
+      if (!resKey.ok) throw new Error('保存 API Key 失败: HTTP ' + resKey.status);
+
+      // 2. 保存配置 (包含 baseUrl)
+      const resConfig = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(appConfig),
+      });
+      if (!resConfig.ok) throw new Error('保存 Base URL 失败: HTTP ' + resConfig.status);
+
+      showAdminSuccess('✓ API Token 配置已保存');
+      initialApiKey = val;
+      initialBaseUrl = baseUrlVal;
+      checkAdminTokenChanges();
     } catch (err) {
       showAdminError('保存失败: ' + err.message);
     }
@@ -1414,7 +2062,7 @@
     wrap.innerHTML = `
       <div class="image-row">
         <input type="text" placeholder="输入图片链接，或直接在此粘贴/拖入图片" onpaste="handleInputPaste(event, this)" ondrop="handleInputDrop(event, this)" ondragover="event.preventDefault()">
-        <label class="btn btn-ghost file-upload-btn" title="选择本地图片">
+        <label class="btn btn-subtle file-upload-btn" style="width:40px;padding:0;height:42px;font-size:18px" title="选择本地图片">
           📁
           <input type="file" accept="image/*" style="display:none" onchange="handleFileSelect(this)">
         </label>
@@ -1437,13 +2085,6 @@
       .filter(Boolean);
   }
 
-  // ── Advanced options toggle ───────────────────────────────────────────
-  function toggleAdvanced() {
-    const panel = document.getElementById('advancedPanel');
-    const chevron = document.getElementById('chevron');
-    const open = panel.classList.toggle('open');
-    chevron.classList.toggle('open', open);
-  }
 
   // 清洗图片数据：去除换行/空格，剥离 data URI 前缀，并补齐 Base64 padding
   // 关键修复：上游 API 用 Python b64decode 解码时会默认剥离 ':' ';' ','，
@@ -1528,11 +2169,12 @@
     const btn = document.getElementById('generateBtn');
     const label = document.getElementById('generateLabel');
     btn.disabled = true;
-    label.innerHTML = '<span class="spin">⟳</span> 提交任务中…';
+    label.innerHTML = '<span class="spinner spinner-sm"></span> 提交任务中…';
 
     try {
       const body = buildBody();
-      const res = await fetch(`${BASE_URL}/v1/videos`, {
+      activeTaskBody = body;
+      const res = await fetch(`${getBaseUrl()}/v1/videos`, {
         method: 'POST',
         headers: {
           'X-Api-Key': key,
@@ -1549,7 +2191,7 @@
 
       const taskId = data.id;
       showStatusCard(taskId, data.status, data.progress ?? 0);
-      label.innerHTML = '<span class="spin">⟳</span> 生成中…';
+      label.innerHTML = '<span class="spinner spinner-sm"></span> 生成中…';
       startPolling(taskId, key);
 
     } catch (err) {
@@ -1625,7 +2267,7 @@
 
   async function pollTask(taskId, key) {
     try {
-      const res = await fetch(`${BASE_URL}/v1/videos/${taskId}?_t=${Date.now()}`, {
+      const res = await fetch(`${getBaseUrl()}/v1/videos/${taskId}?_t=${Date.now()}`, {
         headers: { 'X-Api-Key': key },
       });
 
@@ -1644,6 +2286,24 @@
         stopPolling();
         resetBtn();
         showResult(data);
+        
+        if (activeTaskBody) {
+          const rawUrl = data.video_url || data.remixed_from_video_id;
+          const videoUrl = rawUrl ? `/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
+          const historyItem = {
+            id: 'h_' + Date.now(),
+            title: truncatePrompt(activeTaskBody.prompt),
+            kind: 'video',
+            ar: document.getElementById('videoAspect').value,
+            tone: parseInt(document.documentElement.style.getPropertyValue('--accent-h')) || 292,
+            prompt: activeTaskBody.prompt,
+            model: activeTaskBody.model,
+            width: activeTaskBody.width,
+            height: activeTaskBody.height,
+            url: videoUrl
+          };
+          saveHistoryItem(historyItem);
+        }
         return;
       }
 
@@ -1707,10 +2367,58 @@
 
   function showStatusCard(taskId, status, progress) {
     const card = document.getElementById('statusCard');
-    card.classList.add('visible');
+    card.style.display = 'block';
     document.getElementById('resultPlaceholder').classList.add('hidden');
-    document.getElementById('taskId').textContent = `Task ID: ${taskId}`;
+    document.getElementById('resultPlaceholder').style.display = 'none';
+    document.getElementById('taskId').textContent = taskId ? `Task ID: ${taskId}` : '任务处理中';
     updateStatusCard(taskId, status, progress, {});
+  }
+
+  function hideStatusCard() {
+    stopFakeProgress();
+    const card = document.getElementById('statusCard');
+    if (card) card.style.display = 'none';
+  }
+
+  let fakeProgressInterval = null;
+  let fakeProgressVal = 0;
+
+  function startFakeProgress() {
+    stopFakeProgress();
+    fakeProgressVal = 0;
+    updateFakeProgressUI();
+    fakeProgressInterval = setInterval(() => {
+      // 模拟逐渐增长：开始快，后面慢
+      if (fakeProgressVal < 30) {
+        fakeProgressVal += Math.random() * 4 + 3; // 快速到 30%
+      } else if (fakeProgressVal < 60) {
+        fakeProgressVal += Math.random() * 2 + 1; // 较快到 60%
+      } else if (fakeProgressVal < 88) {
+        fakeProgressVal += Math.random() * 0.8 + 0.3; // 慢速到 88%
+      } else if (fakeProgressVal < 97) {
+        fakeProgressVal += Math.random() * 0.2 + 0.05; // 极慢到 97%
+      }
+      fakeProgressVal = Math.min(fakeProgressVal, 97.5);
+      updateFakeProgressUI();
+    }, 200);
+  }
+
+  function updateFakeProgressUI() {
+    const pct = Math.round(fakeProgressVal);
+    const pctText = document.getElementById('progressPct');
+    const fill = document.getElementById('progressFill');
+    if (pctText) pctText.textContent = `${pct}%`;
+    if (fill) {
+      fill.style.width = `${pct}%`;
+      fill.classList.add('active');
+    }
+  }
+
+  function stopFakeProgress() {
+    if (fakeProgressInterval) {
+      clearInterval(fakeProgressInterval);
+      fakeProgressInterval = null;
+    }
   }
 
   function updateStatusCard(taskId, status, progress, data) {
@@ -1720,21 +2428,53 @@
     badge.className = `status-badge ${meta.cls}`;
 
     const dot = document.getElementById('statusDot');
-    dot.className = `dot${meta.pulse ? ' pulse' : ''}`;
+    dot.className = `status-dot${meta.pulse ? ' pulse' : ''}`;
 
     document.getElementById('statusText').textContent = meta.label;
 
-    const pct = Math.round(progress);
-    document.getElementById('progressPct').textContent = `${pct}%`;
-    document.getElementById('progressFill').style.width = `${pct}%`;
+    const fill = document.getElementById('progressFill');
+    
+    if (status === 'completed') {
+      stopFakeProgress();
+      document.getElementById('progressPct').textContent = `100%`;
+      fill.style.width = `100%`;
+      fill.classList.remove('active');
+    } else if (status === 'failed') {
+      stopFakeProgress();
+      document.getElementById('progressPct').textContent = `0%`;
+      fill.style.width = `0%`;
+      fill.classList.remove('active');
+    } else {
+      if (progress === null || progress === undefined || isNaN(progress)) {
+        if (!fakeProgressInterval) {
+          startFakeProgress();
+        }
+      } else {
+        stopFakeProgress();
+        const pct = Math.round(progress);
+        document.getElementById('progressPct').textContent = `${pct}%`;
+        fill.style.width = `${pct}%`;
+        fill.classList.add('active');
+      }
+    }
 
     const note = document.getElementById('statusNote');
     if (status === 'completed' && data.seconds) {
       note.textContent = `视频时长: ${data.seconds}s · 分辨率: ${data.size || ''}`;
     } else if (status === 'queued') {
-      note.textContent = '任务已提交，等待服务器调度…';
+      note.textContent = currentMediaType === 'video' ? '视频任务已提交，等待服务器调度…' : '图像任务已提交，排队等待中…';
     } else if (status === 'in_progress') {
-      note.textContent = '视频生成中，请稍候（约需 1–3 分钟）…';
+      if (currentMediaType === 'image') {
+        const imgPrompt = document.getElementById('imgPrompt').value.trim();
+        const imgModel = document.getElementById('imgModel').value || appConfig.imageModel || 'agnes-image-2.1-flash';
+        const imgWidth = document.getElementById('imgWidth').value;
+        const imgHeight = document.getElementById('imgHeight').value;
+        note.textContent = `当前生图 · 模型: ${imgModel} · 尺寸: ${imgWidth}x${imgHeight} · 提示词: "${truncatePrompt(imgPrompt)}"`;
+      } else {
+        const videoPrompt = document.getElementById('prompt').value.trim();
+        const videoModel = document.getElementById('videoModelSelect').value || appConfig.videoModel || 'agnes-video-v2.0';
+        note.textContent = `当前生视频 · 模型: ${videoModel} · 提示词: "${truncatePrompt(videoPrompt)}"`;
+      }
     } else {
       note.textContent = '';
     }
@@ -1751,7 +2491,7 @@
     const rawUrl = data.video_url || data.remixed_from_video_id;
 
     // 通过本地后端进行代理中转，彻底破除国内直接访问 storage.googleapis.com 被墙的 ERR_CONNECTION_CLOSED 限制！
-    const videoUrl = rawUrl ? `${BASE_URL}/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
+    const videoUrl = rawUrl ? `/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
 
     video.src = videoUrl;
     video.load();
@@ -1764,12 +2504,13 @@
     const usage = data.usage?.duration_seconds ? `· 生成耗时 ${data.usage.duration_seconds}s` : '';
     meta.innerHTML = `<span>${dur}</span> ${size} ${usage}`;
 
-    card.classList.add('visible');
+    card.style.display = 'block';
     document.getElementById('resultPlaceholder').classList.add('hidden');
+    document.getElementById('resultPlaceholder').style.display = 'none';
   }
 
   function hideResult() {
-    document.getElementById('resultCard').classList.remove('visible');
+    document.getElementById('resultCard').style.display = 'none';
     const video = document.getElementById('videoPlayer');
     video.pause();
     video.src = '';
@@ -1803,17 +2544,18 @@
     // 校验非文生图模式下的参考图 URL
     let refUrl = '';
     if (currentImgMode !== 'txt2img') {
-      refUrl = cleanImageData(document.getElementById('imgRefUrl').value.trim());
+      refUrl = document.getElementById('imgRefUrl').value.trim();
       if (!refUrl) { showImgError('请先输入参考图片 URL'); return; }
     }
 
     clearImgError();
     hideImgResult();
+    showStatusCard('', 'in_progress', null);
 
     const btn = document.getElementById('generateImgBtn');
     const label = document.getElementById('generateImgLabel');
     btn.disabled = true;
-    label.innerHTML = '<span class="spin">⟳</span> 图像生成中…';
+    label.innerHTML = '<span class="spinner spinner-sm"></span> 图像生成中…';
 
     const width = parseInt(document.getElementById('imgWidth').value) || 1024;
     const height = parseInt(document.getElementById('imgHeight').value) || 1024;
@@ -1831,13 +2573,11 @@
       n: 1
     };
 
-    // 注入图像引导模式的参数
+    // 注入图像引导模式参数：image 必须放在 extra_body 内部
     if (currentImgMode !== 'txt2img') {
-      body.image = refUrl;
-      body.mode = currentImgMode;
       body.extra_body = {
-        image: refUrl,
-        mode: currentImgMode
+        image: [refUrl],
+        response_format: "b64_json"
       };
     }
 
@@ -1846,7 +2586,7 @@
     if (negPrompt !== '') body.negative_prompt = negPrompt;
 
     try {
-      const res = await fetch(`${BASE_URL}/v1/images/generations`, {
+      const res = await fetch(`${getBaseUrl()}/v1/images/generations`, {
         method: 'POST',
         headers: {
           'X-Api-Key': key,
@@ -1861,14 +2601,33 @@
         throw new Error(data.error?.message || data.message || `HTTP ${res.status}`);
       }
 
-      const imageUrl = data.data?.[0]?.url;
+      const imageUrl = data.data?.[0]?.b64_json
+        ? `data:image/png;base64,${data.data[0].b64_json}`
+        : data.data?.[0]?.url;
+
       if (!imageUrl) {
-        throw new Error('未获取到有效的图像 URL 链接');
+        throw new Error('未获取到有效的图像数据');
       }
 
+      hideStatusCard();
       showImgResult(imageUrl, width, height);
 
+      const historyItem = {
+        id: 'h_' + Date.now(),
+        title: truncatePrompt(prompt),
+        kind: 'image',
+        ar: document.getElementById('imgSizePreset').value,
+        tone: parseInt(document.documentElement.style.getPropertyValue('--accent-h')) || 292,
+        prompt: prompt,
+        model: model,
+        width: width,
+        height: height,
+        url: imageUrl
+      };
+      saveHistoryItem(historyItem);
+
     } catch (err) {
+      hideStatusCard();
       showImgError(`请求失败: ${err.message}`);
     } finally {
       btn.disabled = false;
@@ -1889,21 +2648,37 @@
     card.classList.add('visible');
     document.getElementById('resultPlaceholder').classList.add('hidden');
 
-    // 绑定下载按钮：通过代理 fetch 图片数据 → 创建 Blob → 触发本地保存
+    // 绑定下载按钮：如果图片是 Base64 (data: 开头)，直接在前端解密为 Blob 下载；如果是网络 URL，则通过代理中转解决跨域
     dlBtn.onclick = async () => {
       try {
-        const proxyUrl = `${BASE_URL}/video-proxy?url=${encodeURIComponent(url)}`;
-        const res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const blob = await res.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        let blobUrl = url;
+        if (url.startsWith('data:')) {
+          const parts = url.split(',');
+          const mime = parts[0].match(/:(.*?);/)[1];
+          const bstr = atob(parts[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mime });
+          blobUrl = URL.createObjectURL(blob);
+        } else {
+          const proxyUrl = `/video-proxy?url=${encodeURIComponent(url)}`;
+          const res = await fetch(proxyUrl);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          blobUrl = URL.createObjectURL(blob);
+        }
         const a = document.createElement('a');
         a.href = blobUrl;
         a.download = 'agnes-image.png';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
+        if (blobUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(blobUrl);
+        }
       } catch (err) {
         showImgError('下载失败: ' + err.message);
       }
@@ -1911,7 +2686,7 @@
   }
 
   function hideImgResult() {
-    document.getElementById('imageResultCard').classList.remove('visible');
+    document.getElementById('imageResultCard').style.display = 'none';
     const img = document.getElementById('imagePlayer');
     img.src = '';
     img.style.display = 'none';
@@ -1964,6 +2739,27 @@
         showError('图片读取失败，请重新选择。');
         return;
       }
+
+      // 读取原图真实尺寸，并自动切换到"原图尺寸"预设
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        uploadedOriginalWidth = tempImg.naturalWidth;
+        uploadedOriginalHeight = tempImg.naturalHeight;
+
+        // 启用并选中"原图尺寸"选项，显示实际分辨率
+        const opt = document.getElementById('imgOriginalSizeOpt');
+        if (opt) {
+          opt.disabled = false;
+          opt.textContent = '\uD83D\uDCD0 \u539f\u56fe\u5c3a\u5bf8 (' + uploadedOriginalWidth + '\u00d7' + uploadedOriginalHeight + ')';
+        }
+        const selectEl = document.getElementById('imgSizePreset');
+        if (selectEl) {
+          selectEl.value = 'original';
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      };
+      tempImg.src = base64Data;
+
       // FileReader.readAsDataURL 理论上不会截断，但加上健壮性校验
       showInputPicPreview(inputEl, base64Data, file.name);
     };
@@ -2069,6 +2865,10 @@
         if (!Array.isArray(appConfig.modelList) || appConfig.modelList.length === 0) {
           appConfig.modelList = [...DEFAULT_MODELS];
         }
+        const adminBaseUrlInput = document.getElementById('adminBaseUrl');
+        if (adminBaseUrlInput && appConfig.baseUrl) {
+          adminBaseUrlInput.value = appConfig.baseUrl;
+        }
       }
     } catch (err) {
       console.warn('加载本地配置失败，使用默认:', err);
@@ -2076,7 +2876,14 @@
   }
 
   async function saveAdminConfig() {
-    // 从 UI 收集默认模型选择
+    // 自动联动保存 API Key
+    const apiKeyVal = document.getElementById('adminApiKey').value.trim();
+    if (apiKeyVal) {
+      await saveAdminApiKey();
+    }
+
+    // 从 UI 收集默认模型选择和 Base URL
+    appConfig.baseUrl  = document.getElementById('adminBaseUrl').value.trim() || 'https://apihub.agnes-ai.com/v1';
     appConfig.videoModel = document.getElementById('defaultVideoModel').value || appConfig.videoModel;
     appConfig.imageModel = document.getElementById('defaultImageModel').value || appConfig.imageModel;
     appConfig.chatModel  = document.getElementById('defaultChatModel').value  || appConfig.chatModel;
@@ -2118,7 +2925,7 @@
     label.innerHTML = '<span class="spin">⟳</span> 拉取中…';
 
     try {
-      const res = await fetch(`${BASE_URL}/v1/models`, {
+      const res = await fetch(`${getBaseUrl()}/v1/models`, {
         headers: { 'X-Api-Key': cachedApiKey },
       });
       const data = await res.json();
@@ -2275,19 +3082,59 @@
     return (sel && sel.value) || appConfig.videoModel || 'agnes-video-v2.0';
   }
 
+  // ── 通用 Toast 提示 ───────────────────────────────────────────────────
+  function showToast(message, type = 'success') {
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let iconHtml = '';
+    if (type === 'success') {
+      iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    } else if (type === 'error') {
+      iconHtml = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    }
+    
+    toast.innerHTML = `${iconHtml}<span>${message}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('visible'), 50);
+    
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
   // ── 管理页消息提示 ────────────────────────────────────────────────────
   function showAdminError(msg) {
     const el = document.getElementById('adminErrorMsg');
-    el.textContent = msg;
-    el.classList.add('visible');
-    document.getElementById('adminSuccessMsg').classList.remove('visible');
+    if (el) {
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    const successEl = document.getElementById('adminSuccessMsg');
+    if (successEl) successEl.classList.remove('visible');
+    showToast(msg, 'error');
   }
   function showAdminSuccess(msg) {
     const el = document.getElementById('adminSuccessMsg');
-    el.textContent = msg;
-    el.classList.add('visible');
-    document.getElementById('adminErrorMsg').classList.remove('visible');
-    setTimeout(() => el.classList.remove('visible'), 3000);
+    if (el) {
+      el.textContent = msg;
+      el.classList.add('visible');
+    }
+    const errorEl = document.getElementById('adminErrorMsg');
+    if (errorEl) errorEl.classList.remove('visible');
+    showToast(msg, 'success');
+    if (el) {
+      setTimeout(() => el.classList.remove('visible'), 3000);
+    }
   }
 
   // ════════════════════════════════════════════════════════════════════
@@ -2390,7 +3237,7 @@
     let accumulated = '';
 
     try {
-      const res = await fetch(`${BASE_URL}/v1/chat/completions`, {
+      const res = await fetch(`${getBaseUrl()}/v1/chat/completions`, {
         method: 'POST',
         headers: {
           'X-Api-Key': key,
