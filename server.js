@@ -406,6 +406,78 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // 代理转发 /agnesapi* → https://apihub.agnes-ai.com/agnesapi*
+  if (req.url.startsWith('/agnesapi')) {
+    let apiKey = req.headers['x-api-key'] || '';
+    if (!apiKey) {
+      apiKey = getApiKeyFromEnv();
+    }
+
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      let targetHost = 'apihub.agnes-ai.com';
+      let targetProtocol = 'https:';
+      let targetPort = 443;
+      let targetPathname = '/agnesapi';
+
+      const configPath = path.join(__dirname, 'config.json');
+      if (fs.existsSync(configPath)) {
+        try {
+          const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+          if (config.baseUrl) {
+            const parsedBase = new URL(config.baseUrl);
+            targetHost = parsedBase.hostname;
+            targetProtocol = parsedBase.protocol;
+            targetPort = parsedBase.port || (parsedBase.protocol === 'https:' ? 443 : 80);
+          }
+        } catch (e) {
+          console.warn('读取 config.json 失败，使用默认配置:', e.message);
+        }
+      }
+
+      const urlObj = new URL(req.url, `http://${req.headers.host}`);
+      const upstreamPath = targetPathname + urlObj.search;
+
+      const options = {
+        hostname: targetHost,
+        port: targetPort,
+        path: upstreamPath,
+        method: req.method,
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      };
+
+      const client = targetProtocol === 'https:' ? https : http;
+      options.agent = targetProtocol === 'https:' ? httpsKeepAliveAgent : httpKeepAliveAgent;
+
+      const proxy = client.request(options, (upstream) => {
+        console.log(`[${new Date().toLocaleTimeString()}] ← 上游查询 ${targetHost} 响应 HTTP ${upstream.statusCode}`);
+        res.writeHead(upstream.statusCode, {
+          'Content-Type': upstream.headers['content-type'] || 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
+        upstream.pipe(res);
+      });
+
+      proxy.on('error', (err) => {
+        console.error('查询代理请求失败:', err.message);
+        if (!res.headersSent) {
+          res.writeHead(502, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: { message: `上游查询请求失败: ${err.message}` } }));
+        }
+      });
+
+      if (body) proxy.write(body);
+      proxy.end();
+    });
+    return;
+  }
+
   // 代理转发 /v1/* → https://apihub.agnes-ai.com/v1/*
   if (req.url.startsWith('/v1/')) {
     let apiKey = req.headers['x-api-key'] || '';

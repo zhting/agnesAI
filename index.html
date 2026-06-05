@@ -1903,7 +1903,7 @@ select option {
   function getBaseUrl() {
     return ''; // 始终走本地代理转发，以正确注入 Authorization 头部并避免跨域
   }
-  const POLL_INTERVAL_MS = 3000;
+  const POLL_INTERVAL_MS = 5000;
 
   // 内置回落模型（/v1/models 不可用时使用，与文档中提及的模型保持一致）
   const DEFAULT_MODELS = [
@@ -1916,6 +1916,7 @@ select option {
   let currentMode = 'text';
   let currentImgMode = 'txt2img';
   let pollTimer = null;
+  let isPollingActive = false;
   let cachedApiKey = '';
   let activeTaskBody = null;
   let activeAbortController = null; // 中止正在进行的视频生成提交
@@ -2260,7 +2261,9 @@ select option {
     const commaIdx = cleaned.indexOf(',');
     if (commaIdx < 0) return cleaned; // 找不到分隔符则原样返回
 
-    const prefix = cleaned.slice(0, commaIdx + 1); // data:image/xxx;base64,
+    // 上游 API 可能直接对整个字符串进行 b64decode，如果不去掉 data URI 前缀，
+    // 前缀中的字符会被当做 base64 字符解码，从而导致 padding 错误（png）或图片解析失败（jpeg 头部被破坏）。
+    // 因此这里明确剥离前缀，只发送纯 Base64 数据。
     let dataPart = cleaned.slice(commaIdx + 1);
 
     // 补齐 base64 padding 至 4 的倍数
@@ -2269,7 +2272,7 @@ select option {
       dataPart = dataPart + '='.repeat(paddingNeeded);
     }
 
-    return prefix + dataPart;
+    return dataPart;
   }
 
   // ── Build request body ────────────────────────────────────────────────
@@ -2293,7 +2296,6 @@ select option {
     };
 
     if (seedVal !== '') body.seed = parseInt(seedVal);
-    if (inferSteps !== '') body.num_inference_steps = parseInt(inferSteps);
     if (negPrompt !== '') body.negative_prompt = negPrompt;
 
     if (currentMode === 'image') {
@@ -2368,10 +2370,11 @@ select option {
 
         // 提交成功，转入轮询
         const taskId = data.id;
+        const videoId = data.video_id;
         hideRetryInfo();
-        showStatusCard(taskId, data.status, data.progress);
+        showStatusCard(videoId || taskId, data.status, data.progress);
         label.innerHTML = '<span class="spinner spinner-sm"></span> 生成中…';
-        startPolling(taskId, key);
+        startPolling(videoId, taskId, key);
         return;
 
       } catch (err) {
@@ -2466,15 +2469,32 @@ select option {
   const MAX_RETRY_SERVER = 10;  // 服务端临时错误最多重试次数
   const MAX_RETRY_NETWORK = 5;  // 网络错误最多重试次数
 
-  function startPolling(taskId, key) {
+  function startPolling(videoId, taskId, key) {
+    stopPolling();
     pollErrorCount = 0;
+    lastKnownProgress = 0;  // 新任务开始，重置上次进度记录
     hideRetryInfo();
-    pollTimer = setInterval(() => pollTask(taskId, key), POLL_INTERVAL_MS);
-    pollTask(taskId, key);
+    isPollingActive = true;
+    pollTaskRecursive(videoId, taskId, key);
   }
 
   function stopPolling() {
-    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    isPollingActive = false;
+    if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+  }
+
+  async function pollTaskRecursive(videoId, taskId, key) {
+    if (!isPollingActive) return;
+
+    try {
+      await pollTask(videoId, taskId, key);
+    } catch (e) {
+      console.error('轮询执行出错:', e);
+    }
+
+    if (isPollingActive) {
+      pollTimer = setTimeout(() => pollTaskRecursive(videoId, taskId, key), POLL_INTERVAL_MS);
+    }
   }
 
   // 判断是否为服务端临时错误
@@ -2517,9 +2537,17 @@ select option {
     el.classList.remove('visible', 'warn', 'danger');
   }
 
-  async function pollTask(taskId, key) {
+  async function pollTask(videoId, taskId, key) {
     try {
-      const res = await fetch(`${getBaseUrl()}/v1/videos/${taskId}?_t=${Date.now()}`, {
+      let url;
+      if (videoId) {
+        const model = getSelectedVideoModel();
+        url = `${getBaseUrl()}/agnesapi?video_id=${videoId}&model_name=${model}`;
+      } else {
+        url = `${getBaseUrl()}/v1/videos/${taskId}?_t=${Date.now()}`;
+      }
+
+      const res = await fetch(url, {
         headers: { 'X-Api-Key': key },
       });
 
@@ -2534,12 +2562,13 @@ select option {
       if (data.status === 'completed') {
         pollErrorCount = 0;
         hideRetryInfo();
-        updateStatusCard(taskId, data.status, data.progress, data);
+        updateStatusCard(videoId || taskId, data.status, data.progress, data);
         stopPolling();
         resetBtn();
         showResult(data);
         
         if (activeTaskBody) {
+          // 实际 API 依然使用 remixed_from_video_id 返回链接，必须保留兼容
           const rawUrl = data.video_url || data.remixed_from_video_id;
           const videoUrl = rawUrl ? `/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
           const historyItem = {
@@ -2561,7 +2590,7 @@ select option {
 
       if (data.status === 'failed') {
         hideRetryInfo();
-        updateStatusCard(taskId, data.status, data.progress, data);
+        updateStatusCard(videoId || taskId, data.status, data.progress, data);
         stopPolling();
         resetBtn();
         const reason = data.error?.message || '未知原因';
@@ -2577,7 +2606,7 @@ select option {
       // 4. 正常轮询中，更新进度
       pollErrorCount = 0;
       hideRetryInfo();
-      updateStatusCard(taskId, data.status, data.progress, data);
+      updateStatusCard(videoId || taskId, data.status, data.progress, data);
 
     } catch (err) {
       // API Key 无效直接失败，不重试
@@ -2641,12 +2670,14 @@ select option {
   let fakeProgressInterval = null;
   let fakeProgressVal = 0;
   let lastFakeStatus = null;
+  let lastKnownProgress = 0;  // 最后一次真实 progress 值，防止简化响应导致进度回退
 
   function startFakeProgress(status) {
     if (status !== lastFakeStatus) {
       lastFakeStatus = status;
       if (!fakeProgressInterval) {
-        fakeProgressVal = 0;
+        // 从最后一次真实进度起步，而不是从 0 重置
+        fakeProgressVal = Math.max(fakeProgressVal, lastKnownProgress);
         updateFakeProgressUI();
       }
     }
@@ -2737,9 +2768,10 @@ select option {
     } else {
       // 只有在 progress 是有效数字时，才使用真实进度，否则使用模拟
       if (progress !== null && progress !== undefined && !isNaN(progress)) {
-        stopFakeProgress();
         // 兼容浮点数格式的百分比（例如将 0.35 转换为 35%）
         const pct = Math.round(progress > 1 ? progress : progress * 100);
+        lastKnownProgress = pct;  // 记录最后真实进度，防止简化响应时回退
+        stopFakeProgress();
         document.getElementById('progressPct').textContent = `${pct}%`;
         fill.style.width = `${pct}%`;
         fill.classList.add('active');
@@ -2777,7 +2809,7 @@ select option {
     const meta = document.getElementById('resultMeta');
     const dlBtn = document.getElementById('downloadBtn');
 
-    // 兼容上游官方 API 实际返回的视频链接字段 remixed_from_video_id（文档为 video_url）
+    // 尽管文档明确写 completed 状态返回 video_url 字段，但实际 API 返回的是 remixed_from_video_id
     const rawUrl = data.video_url || data.remixed_from_video_id;
 
     // 如果已经是本地资源，则直接播放本地文件；否则通过代理中转破除被墙限制！
@@ -3060,55 +3092,59 @@ select option {
     return best.id;
   }
 
-  function processImageFile(file, inputEl) {
+  function compressImage(file, callback) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      const base64Data = e.target.result;
-      if (!base64Data) {
-        showError('图片读取失败，请重新选择。');
-        return;
-      }
-
-      // 读取原图真实尺寸，并根据当前的模式自动切换比例预设
-      const tempImg = new Image();
-      tempImg.onload = function() {
-        const w = tempImg.naturalWidth;
-        const h = tempImg.naturalHeight;
-
-        if (currentMediaType === 'image') {
-          uploadedOriginalWidth = w;
-          uploadedOriginalHeight = h;
-
-          // 启用并选中"原图尺寸"选项，显示实际分辨率
-          const opt = document.getElementById('imgOriginalSizeOpt');
-          if (opt) {
-            opt.disabled = false;
-            opt.textContent = '\uD83D\uDCD0 \u539f\u56fe\u5c3a\u5bf8 (' + w + '\u00d7' + h + ')';
-          }
-          const selectEl = document.getElementById('imgSizePreset');
-          if (selectEl) {
-            selectEl.value = 'original';
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        } else if (currentMediaType === 'video') {
-          // 视频模块上传参考图，计算最佳视频比例并切换高亮，自动联动修改宽高 select 的值
-          const bestAspect = matchBestVideoAspect(w, h);
-          const selectEl = document.getElementById('videoAspect');
-          if (selectEl) {
-            selectEl.value = bestAspect;
-            selectEl.dispatchEvent(new Event('change', { bubbles: true }));
-          }
-        }
+      const img = new Image();
+      img.onload = function() {
+        // 由于上游模型对 Canvas 重新编码的图片数据兼容性不佳，导致生成中途报错 cannot identify image file。
+        // 因此这里移除 Canvas 压缩逻辑，统一直接返回用户的原始 Base64 数据（保留实际宽高用于前端展示）。
+        const width = img.naturalWidth;
+        const height = img.naturalHeight;
+        callback(e.target.result, width, height);
       };
-      tempImg.src = base64Data;
-
-      // FileReader.readAsDataURL 理论上不会截断，但加上健壮性校验
-      showInputPicPreview(inputEl, base64Data, file.name);
+      img.src = e.target.result;
     };
     reader.onerror = function() {
       showError('图片文件读取失败，请重新选择。');
     };
     reader.readAsDataURL(file);
+  }
+
+  function processImageFile(file, inputEl) {
+    compressImage(file, (base64Data, w, h) => {
+      if (!base64Data) {
+        showError('图片读取失败，请重新选择。');
+        return;
+      }
+
+      if (currentMediaType === 'image') {
+        uploadedOriginalWidth = w;
+        uploadedOriginalHeight = h;
+
+        // 启用并选中"原图尺寸"选项，显示实际分辨率
+        const opt = document.getElementById('imgOriginalSizeOpt');
+        if (opt) {
+          opt.disabled = false;
+          opt.textContent = '📐 原图尺寸 (' + w + '×' + h + ')';
+        }
+        const selectEl = document.getElementById('imgSizePreset');
+        if (selectEl) {
+          selectEl.value = 'original';
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      } else if (currentMediaType === 'video') {
+        // 视频模块上传参考图，计算最佳视频比例并切换高亮，自动联动修改宽高 select 的值
+        const bestAspect = matchBestVideoAspect(w, h);
+        const selectEl = document.getElementById('videoAspect');
+        if (selectEl) {
+          selectEl.value = bestAspect;
+          selectEl.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+
+      showInputPicPreview(inputEl, base64Data, file.name);
+    });
   }
 
   function showInputPicPreview(inputEl, base64OrUrl, filename = '') {
