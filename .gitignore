@@ -25,3 +25,16 @@ desktop.ini
 
 # Claude Code 本地工作目录
 .claude/
+
+# 敏感文件
+.env
+
+# 历史与生成媒体
+outputs/
+history.json
+
+# 备份与临时测试文件
+*.bak
+*.zip
+ai面板/
+test_api.js

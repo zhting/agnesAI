@@ -5,6 +5,22 @@ const path = require('path');
 
 const PORT = 3000;
 
+// ── 上游连接复用 ──────────────────────────────────────────────────
+// 默认 https.globalAgent 每次请求都会新建 socket（TLS 握手 ~150-400 ms）。
+// 用自定义 Agent 开启 keepAlive，多轮对话/轮询能复用同一条连接，省下握手时间。
+const httpsKeepAliveAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30 * 1000,  // 30s 内复用 socket
+  maxSockets: 32,             // 单主机最大并发
+  scheduling: 'lifo',         // 偏好最近使用的连接（命中缓存几率更高）
+});
+const httpKeepAliveAgent = new http.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 30 * 1000,
+  maxSockets: 32,
+  scheduling: 'lifo',
+});
+
 // 读写环境配置文件的辅助函数
 function getApiKeyFromEnv() {
   const envPath = path.join(__dirname, '.env');
@@ -363,7 +379,8 @@ const server = http.createServer((req, res) => {
         path: parsedTarget.pathname + parsedTarget.search,
         method: 'GET',
         headers: proxyHeaders,
-        timeout: 20000 // 20秒超时限制
+        timeout: 20000, // 20秒超时限制
+        agent: httpsKeepAliveAgent,
       }, (upstream) => {
         res.writeHead(upstream.statusCode, upstream.headers);
         upstream.pipe(res);
@@ -440,14 +457,76 @@ const server = http.createServer((req, res) => {
           'Content-Type': 'application/json',
         },
       };
-      if (body) options.headers['Content-Length'] = Buffer.byteLength(body);
+      const bodyByteLen = body ? Buffer.byteLength(body) : 0;
+      if (body) options.headers['Content-Length'] = bodyByteLen;
+
+      // 打印转发请求摘要，便于排查 413/503 等与请求体大小相关的问题
+      if (req.method === 'POST' && bodyByteLen > 0) {
+        const sizeKB = (bodyByteLen / 1024).toFixed(1);
+        const sizeMB = (bodyByteLen / 1024 / 1024).toFixed(2);
+        console.log(`[${new Date().toLocaleTimeString()}] → 上游 ${req.method} ${upstreamPath} · 请求体 ${sizeKB} KB (${sizeMB} MB)`);
+        // 大体积请求额外提示：base64 图片很容易超出上游网关默认限制
+        if (bodyByteLen > 4 * 1024 * 1024) {
+          console.warn(`  ⚠ 请求体超过 4 MB，可能触发上游网关的 body size 限制（常见返回 503/413/空响应）`);
+        }
+      }
 
       const client = targetUrl.protocol === 'https:' ? https : http;
+      // 复用 TLS 连接（多轮聊天/视频轮询可省下握手时间）
+      options.agent = targetUrl.protocol === 'https:' ? httpsKeepAliveAgent : httpKeepAliveAgent;
+
+      // ── 上游耗时打点 ──
+      // 对所有 /v1/* 请求都打点，让用户一眼看出瓶颈在「连接」「上游处理」还是「下游传输」。
+      // 对 /v1/chat/completions 还会额外计算「首字节延迟 TTFB」与「首 chunk 延迟 TTFT」。
+      const isChatCompletion = upstreamPath.includes('/chat/completions');
+      const t0 = Date.now();
+      let tSocketConnect = null;
+      let tFirstByte = null;
+      let tFirstChunk = null;
+      let socketReused = false;
+
       const proxy = client.request(options, (upstream) => {
-        console.log(`[${new Date().toLocaleTimeString()}] 上游接口 (${targetUrl.hostname}) 响应状态码: ${upstream.statusCode}`);
+        tFirstByte = Date.now();
+        const ttfbMs = tFirstByte - t0;
+        const connMs = tSocketConnect != null ? (tSocketConnect - t0) : null;
+        const reuseTag = socketReused ? '(socket 复用)' : '(新建连接)';
+        console.log(
+          `[${new Date().toLocaleTimeString()}] ← 上游 ${targetUrl.hostname} 响应 HTTP ${upstream.statusCode} · ` +
+          `TTFB ${ttfbMs}ms · 连接 ${connMs != null ? connMs + 'ms' : 'N/A'} ${reuseTag}`
+        );
 
         const upstreamCT = (upstream.headers['content-type'] || '').toLowerCase();
         const isStream = upstreamCT.includes('text/event-stream');
+
+        // 在 'data' 首次到来时记录首 chunk 时刻（TTFT）。
+        // 这个监听器只用来打点，不消费 chunk —— upstream.pipe(res) 仍会拿到完整数据流。
+        const firstChunkListener = () => {
+          if (tFirstChunk == null) {
+            tFirstChunk = Date.now();
+            const ttftMs = tFirstChunk - t0;
+            const headerToChunkMs = tFirstChunk - tFirstByte;
+            if (isChatCompletion) {
+              console.log(
+                `  ⏱ 聊天 TTFT ${ttftMs}ms (header→chunk ${headerToChunkMs}ms)` +
+                (isStream ? ' · 流式' : ' · 非流式')
+              );
+            }
+          }
+        };
+        upstream.once('data', firstChunkListener);
+
+        // 流结束时打印整体耗时（流式 = 全部 token 收完；非流式 = 全部 body 收完）
+        upstream.once('end', () => {
+          const totalMs = Date.now() - t0;
+          if (isChatCompletion || isStream) {
+            const ttft = tFirstChunk != null ? (tFirstChunk - t0) : null;
+            const gen = tFirstChunk != null ? (Date.now() - tFirstChunk) : null;
+            console.log(
+              `  ⏱ 上游总耗时 ${totalMs}ms` +
+              (ttft != null ? ` · TTFT ${ttft}ms · 生成阶段 ${gen}ms` : '')
+            );
+          }
+        });
 
         // 流式响应（SSE）：直接透传，不收集 body，否则前端无法增量收到 token
         if (isStream && upstream.statusCode >= 200 && upstream.statusCode < 300) {
@@ -463,38 +542,51 @@ const server = http.createServer((req, res) => {
 
         let respBody = '';
         upstream.on('data', chunk => { respBody += chunk; });
+
+        // 非 2xx 错误响应：必须等 body 全部收完再回，否则永远只看到 `(空响应)`
+        if (upstream.statusCode < 200 || upstream.statusCode >= 300) {
+          upstream.on('end', () => {
+            console.log(`[${new Date().toLocaleTimeString()}] 上游接口返回数据:`, respBody.slice(0, 500));
+            let parsed;
+            try {
+              parsed = JSON.parse(respBody);
+            } catch {
+              parsed = null;
+            }
+            res.writeHead(upstream.statusCode, {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0'
+            });
+            if (upstream.statusCode === 401) {
+              res.end(JSON.stringify({ error: { message: 'API Key 无效或已过期，请检查并重新输入。' } }));
+            } else if (parsed && parsed.error) {
+              const msg = parsed.error.message || parsed.error;
+              res.end(JSON.stringify({ error: { message: `上游错误: ${msg}` } }));
+            } else if (parsed && parsed.message) {
+              res.end(JSON.stringify({ error: { message: `上游错误: ${parsed.message}` } }));
+            } else {
+              // 空响应 + 503/413 大概率是上游网关因请求体过大或当下繁忙而中断
+              const isEmpty = !respBody;
+              const isOverloaded = upstream.statusCode === 503 || upstream.statusCode === 413 || upstream.statusCode === 502;
+              let summary = respBody ? respBody.slice(0, 300) : `(空响应)`;
+              if (isEmpty && isOverloaded && bodyByteLen > 1024 * 1024) {
+                const sizeMB = (bodyByteLen / 1024 / 1024).toFixed(2);
+                summary = `(空响应，请求体 ${sizeMB} MB) — 上游网关可能因请求体过大而中断，建议改用图片 URL 或更小尺寸的参考图`;
+              } else if (isEmpty && isOverloaded) {
+                summary = `(空响应) — 上游服务暂时繁忙，稍后将自动重试`;
+              }
+              res.end(JSON.stringify({ error: { message: `上游返回 HTTP ${upstream.statusCode}: ${summary}` } }));
+            }
+          });
+          return;
+        }
+
+        // 2xx 正常响应：日志记录后直接透传
         upstream.on('end', () => {
           console.log(`[${new Date().toLocaleTimeString()}] 上游接口返回数据:`, respBody.slice(0, 500));
         });
-
-        // 上游非 2xx 时，统一包装为 JSON 错误返回
-        if (upstream.statusCode < 200 || upstream.statusCode >= 300) {
-          let parsed;
-          try {
-            parsed = JSON.parse(respBody);
-          } catch {
-            parsed = null;
-          }
-          res.writeHead(upstream.statusCode, {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          });
-          if (upstream.statusCode === 401) {
-            res.end(JSON.stringify({ error: { message: 'API Key 无效或已过期，请检查并重新输入。' } }));
-          } else if (parsed && parsed.error) {
-            // 嵌套错误展开
-            const msg = parsed.error.message || parsed.error;
-            res.end(JSON.stringify({ error: { message: `上游错误: ${msg}` } }));
-          } else if (parsed && parsed.message) {
-            res.end(JSON.stringify({ error: { message: `上游错误: ${parsed.message}` } }));
-          } else {
-            const summary = respBody ? respBody.slice(0, 300) : `(空响应)`;
-            res.end(JSON.stringify({ error: { message: `上游返回 HTTP ${upstream.statusCode}: ${summary}` } }));
-          }
-          return;
-        }
 
         res.writeHead(upstream.statusCode, {
           'Content-Type': upstream.headers['content-type'] || 'application/json',
@@ -518,6 +610,20 @@ const server = http.createServer((req, res) => {
         }
         res.writeHead(502, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: { message: `上游请求失败: ${err.message}` } }));
+      });
+
+      // 记录 socket 连接时刻，用于区分「连接耗时」和「上游处理耗时」
+      proxy.on('socket', (socket) => {
+        // 如果 socket 已建立连接（来自 keepAlive 池），直接打点；否则等 'connect' 事件
+        if (socket.connecting === false || socket.writable) {
+          tSocketConnect = Date.now();
+          socketReused = true;
+        } else {
+          socket.once('connect', () => {
+            tSocketConnect = Date.now();
+            socketReused = false;
+          });
+        }
       });
 
       if (body) proxy.write(body);
