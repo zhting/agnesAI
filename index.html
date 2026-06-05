@@ -2367,7 +2367,10 @@ select option {
 
   function showStatusCard(taskId, status, progress) {
     const card = document.getElementById('statusCard');
-    card.style.display = 'block';
+    if (card) {
+      card.classList.add('visible');
+      card.style.display = 'block';
+    }
     document.getElementById('resultPlaceholder').classList.add('hidden');
     document.getElementById('resultPlaceholder').style.display = 'none';
     document.getElementById('taskId').textContent = taskId ? `Task ID: ${taskId}` : '任务处理中';
@@ -2377,7 +2380,10 @@ select option {
   function hideStatusCard() {
     stopFakeProgress();
     const card = document.getElementById('statusCard');
-    if (card) card.style.display = 'none';
+    if (card) {
+      card.classList.remove('visible');
+      card.style.display = 'none';
+    }
   }
 
   let fakeProgressInterval = null;
