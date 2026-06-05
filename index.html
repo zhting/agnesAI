@@ -2496,8 +2496,10 @@ select option {
     // 兼容上游官方 API 实际返回的视频链接字段 remixed_from_video_id（文档为 video_url）
     const rawUrl = data.video_url || data.remixed_from_video_id;
 
-    // 通过本地后端进行代理中转，彻底破除国内直接访问 storage.googleapis.com 被墙的 ERR_CONNECTION_CLOSED 限制！
-    const videoUrl = rawUrl ? `/video-proxy?url=${encodeURIComponent(rawUrl)}` : '';
+    // 如果已经是本地资源，则直接播放本地文件；否则通过代理中转破除被墙限制！
+    const videoUrl = (rawUrl && (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')))
+      ? `/video-proxy?url=${encodeURIComponent(rawUrl)}`
+      : (rawUrl || '');
 
     video.src = videoUrl;
     video.load();
@@ -2669,8 +2671,10 @@ select option {
           }
           const blob = new Blob([u8arr], { type: mime });
           blobUrl = URL.createObjectURL(blob);
-        } else {
-          const proxyUrl = `/video-proxy?url=${encodeURIComponent(url)}`;
+          // 如果已经是本地资源（如以 /outputs/ 开头），直接发起请求下载，否则通过 video-proxy 代理
+          const proxyUrl = (url && (url.startsWith('http://') || url.startsWith('https://')))
+            ? `/video-proxy?url=${encodeURIComponent(url)}`
+            : (url || '');
           const res = await fetch(proxyUrl);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           const blob = await res.blob();
