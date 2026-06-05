@@ -2671,14 +2671,15 @@ select option {
           }
           const blob = new Blob([u8arr], { type: mime });
           blobUrl = URL.createObjectURL(blob);
+        } else {
           // 如果已经是本地资源（如以 /outputs/ 开头），直接发起请求下载，否则通过 video-proxy 代理
           const proxyUrl = (url && (url.startsWith('http://') || url.startsWith('https://')))
             ? `/video-proxy?url=${encodeURIComponent(url)}`
             : (url || '');
           const res = await fetch(proxyUrl);
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const blob = await res.blob();
-          blobUrl = URL.createObjectURL(blob);
+          const imgBlob = await res.blob();
+          blobUrl = URL.createObjectURL(imgBlob);
         }
         const a = document.createElement('a');
         a.href = blobUrl;
