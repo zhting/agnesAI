@@ -2388,25 +2388,44 @@ select option {
 
   let fakeProgressInterval = null;
   let fakeProgressVal = 0;
+  let lastFakeStatus = null;
 
-  function startFakeProgress() {
-    stopFakeProgress();
-    fakeProgressVal = 0;
-    updateFakeProgressUI();
-    fakeProgressInterval = setInterval(() => {
-      // 模拟逐渐增长：开始快，后面慢
-      if (fakeProgressVal < 30) {
-        fakeProgressVal += Math.random() * 4 + 3; // 快速到 30%
-      } else if (fakeProgressVal < 60) {
-        fakeProgressVal += Math.random() * 2 + 1; // 较快到 60%
-      } else if (fakeProgressVal < 88) {
-        fakeProgressVal += Math.random() * 0.8 + 0.3; // 慢速到 88%
-      } else if (fakeProgressVal < 97) {
-        fakeProgressVal += Math.random() * 0.2 + 0.05; // 极慢到 97%
+  function startFakeProgress(status) {
+    if (status !== lastFakeStatus) {
+      lastFakeStatus = status;
+      if (!fakeProgressInterval) {
+        fakeProgressVal = 0;
+        updateFakeProgressUI();
       }
-      fakeProgressVal = Math.min(fakeProgressVal, 97.5);
-      updateFakeProgressUI();
-    }, 200);
+    }
+
+    if (fakeProgressInterval) return; // 保持当前运行的定时器
+
+    fakeProgressInterval = setInterval(() => {
+      let limit = 95;
+      if (lastFakeStatus === 'queued') {
+        limit = 8; // 排队阶段上限限制在 8%
+      }
+
+      if (fakeProgressVal < limit) {
+        if (lastFakeStatus === 'queued') {
+          fakeProgressVal += Math.random() * 0.4 + 0.1;
+        } else {
+          // 慢速长效增长，拟合 60-90 秒的生成时间
+          if (fakeProgressVal < 30) {
+            fakeProgressVal += Math.random() * 1.5 + 0.5;
+          } else if (fakeProgressVal < 60) {
+            fakeProgressVal += Math.random() * 0.8 + 0.3;
+          } else if (fakeProgressVal < 88) {
+            fakeProgressVal += Math.random() * 0.3 + 0.1;
+          } else if (fakeProgressVal < 95) {
+            fakeProgressVal += Math.random() * 0.05 + 0.01;
+          }
+        }
+        fakeProgressVal = Math.min(fakeProgressVal, limit);
+        updateFakeProgressUI();
+      }
+    }, 1000);
   }
 
   function updateFakeProgressUI() {
@@ -2425,6 +2444,7 @@ select option {
       clearInterval(fakeProgressInterval);
       fakeProgressInterval = null;
     }
+    lastFakeStatus = null;
   }
 
   function updateStatusCard(taskId, status, progress, data) {
@@ -2453,9 +2473,7 @@ select option {
     } else {
       // 只有在 progress 是有效的大于 0 的数字时，才使用真实进度，否则触发/保持平滑自动增长模拟
       if (progress === null || progress === undefined || isNaN(progress) || progress === 0) {
-        if (!fakeProgressInterval) {
-          startFakeProgress();
-        }
+        startFakeProgress(status);
       } else {
         stopFakeProgress();
         // 兼容浮点数格式的百分比（例如将 0.35 转换为 35%）
